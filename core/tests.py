@@ -54,8 +54,8 @@ class ServiceTests(TestCase):
             customer=self.customer,
             date=date.today(),
             guest_count=50,
-            base_cost=Decimal('1000.00'),
-            cost_per_guest=Decimal('10.00')
+            event_type='WEDDING',
+            budget=Decimal('5000.00')
         )
         # Add Decor Rental linked to Event
         rental = Rental.objects.create(
@@ -66,9 +66,9 @@ class ServiceTests(TestCase):
         )
         RentalItem.objects.create(rental=rental, inventory_item=self.decor, quantity=10, price_at_booking=10) # 10 * 10 = 100
 
-        # Expected: 1000 (Base) + 500 (Guests) + 100 (Decor) = 1600
+        # Expected: 5000 (Budget) + 100 (Decor) = 5100
         total = calculate_event_total(event)
-        self.assertEqual(total, Decimal('1600.00'))
+        self.assertEqual(total, Decimal('5100.00'))
 
         invoice = create_invoice_for_event(event)
-        self.assertEqual(invoice.total_amount, Decimal('1600.00'))
+        self.assertEqual(invoice.total_amount, Decimal('5100.00'))

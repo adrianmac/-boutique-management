@@ -27,10 +27,10 @@ def event_wizard_step1(request):
                 'customer_id': form.cleaned_data['customer'].id,
                 'date': form.cleaned_data['date'].isoformat(),
                 'guest_count': form.cleaned_data['guest_count'],
+                'event_type': form.cleaned_data['event_type'],
                 'location': form.cleaned_data['location'],
                 'description': form.cleaned_data['description'],
-                'base_cost': float(form.cleaned_data['base_cost']),
-                'cost_per_guest': float(form.cleaned_data['cost_per_guest']),
+                'budget': float(form.cleaned_data['budget']),
             }
             return redirect('event_wizard_step2')
     else:
@@ -85,8 +85,7 @@ def event_wizard_confirm(request):
     customer = Customer.objects.get(id=data['customer_id'])
 
     # Calculate costs
-    base_cost = Decimal(data['base_cost'])
-    guest_cost = Decimal(data['cost_per_guest']) * data['guest_count']
+    budget = Decimal(data['budget'])
 
     decor_items = []
     decor_total = Decimal('0.00')
@@ -98,7 +97,7 @@ def event_wizard_confirm(request):
             decor_total += line_total
             decor_items.append({'item': item, 'qty': qty, 'total': line_total})
 
-    total_est = base_cost + guest_cost + decor_total
+    total_est = budget + decor_total
 
     if request.method == 'POST':
         # Create Event
@@ -107,10 +106,10 @@ def event_wizard_confirm(request):
             customer=customer,
             date=data['date'],
             guest_count=data['guest_count'],
+            event_type=data.get('event_type', 'OTHER'),
             location=data['location'],
             description=data['description'],
-            base_cost=base_cost,
-            cost_per_guest=Decimal(data['cost_per_guest'])
+            budget=budget
         )
 
         # Create Rental for Decor if items selected
@@ -146,7 +145,6 @@ def event_wizard_confirm(request):
         'data': data,
         'customer': customer,
         'decor_items': decor_items,
-        'base_cost': base_cost,
-        'guest_cost': guest_cost,
+        'budget': budget,
         'total': total_est
     })

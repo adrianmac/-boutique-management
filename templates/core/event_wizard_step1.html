@@ -9,12 +9,18 @@
                     {% csrf_token %}
                     <div class="row g-3">
                         <div class="col-md-12">{{ form.name.label_tag }} {{ form.name }}</div>
-                        <div class="col-md-6">{{ form.customer.label_tag }} {{ form.customer }}</div>
+                        <div class="col-md-10">
+                            {{ form.customer.label_tag }}
+                            {{ form.customer }}
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <a href="{% url 'customer_create' %}?next={{ request.path }}" class="btn btn-outline-primary w-100" title="Add New Customer"><i class="bi bi-person-plus"></i></a>
+                        </div>
                         <div class="col-md-6">{{ form.date.label_tag }} {{ form.date }}</div>
                         <div class="col-md-6">{{ form.guest_count.label_tag }} {{ form.guest_count }}</div>
+                        <div class="col-md-6">{{ form.event_type.label_tag }} {{ form.event_type }}</div>
                         <div class="col-md-6">{{ form.location.label_tag }} {{ form.location }}</div>
-                        <div class="col-md-6">{{ form.base_cost.label_tag }} {{ form.base_cost }}</div>
-                        <div class="col-md-6">{{ form.cost_per_guest.label_tag }} {{ form.cost_per_guest }}</div>
+                        <div class="col-md-6">{{ form.budget.label_tag }} {{ form.budget }}</div>
                         <div class="col-12">{{ form.description.label_tag }} {{ form.description }}</div>
                     </div>
                     <div class="d-flex justify-content-end mt-4">
@@ -23,6 +29,201 @@
                 </form>
             </div>
         </div>
+    </div>
+</div>
+{% endblock %}
+
+cat > templates/core/event_wizard_confirm.html <<EOF
+{% extends 'base.html' %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card border-primary">
+            <div class="card-header bg-primary text-white">Confirm Event</div>
+            <div class="card-body">
+                <h3>{{ data.name }}</h3>
+                <p><strong>Customer:</strong> {{ customer.name }}</p>
+                <p><strong>Date:</strong> {{ data.date }}</p>
+                <p><strong>Guests:</strong> {{ data.guest_count }}</p>
+                <p><strong>Type:</strong> {{ data.event_type }}</p>
+                <hr>
+                <h5>Cost Breakdown</h5>
+                <ul class="list-group mb-3">
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Event Budget</span>
+                        <span>${{ budget }}</span>
+                    </li>
+                    {% for item in decor_items %}
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>{{ item.item.name }} (x{{ item.qty }})</span>
+                        <span>${{ item.total }}</span>
+                    </li>
+                    {% endfor %}
+                    <li class="list-group-item list-group-item-dark d-flex justify-content-between fw-bold">
+                        <span>Total Estimated</span>
+                        <span>${{ total }}</span>
+                    </li>
+                </ul>
+
+                <form method="post" class="d-grid">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-lg btn-success">Confirm & Create Event</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+cat > templates/core/event_detail.html <<EOF
+{% extends 'base.html' %}
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header bg-info text-dark">Event Details</div>
+            <div class="card-body">
+                <h3>{{ event.name }} <span class="badge bg-secondary fs-6 align-middle">{{ event.get_event_type_display }}</span></h3>
+                <p class="text-muted">{{ event.date|date:"l, F d, Y" }}</p>
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>Customer:</strong> <a href="{% url 'customer_detail' pk=event.customer.pk %}">{{ event.customer.name }}</a><br>
+                        <strong>Location:</strong> {{ event.location }}
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Guests:</strong> {{ event.guest_count }}<br>
+                        <strong>Description:</strong> {{ event.description }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">Decor Rentals</div>
+            <div class="card-body">
+                {% for rental in event.rentals.all %}
+                <h6>Rental #{{ rental.id }}</h6>
+                <table class="table table-sm">
+                    <thead>
+                        <tr><th>Item</th><th>Qty</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for item in rental.items.all %}
+                        <tr>
+                            <td>{{ item.inventory_item.name }}</td>
+                            <td>{{ item.quantity }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% empty %}
+                <p class="text-muted">No decor reserved for this event.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card mb-3">
+            <div class="card-header">Financials</div>
+            <div class="card-body">
+                <p><strong>Budget:</strong> ${{ event.budget }}</p>
+                {% if event.invoice %}
+                <div class="d-grid mt-3">
+                    <a href="{% url 'invoice_detail' pk=event.invoice.pk %}" class="btn btn-success">View Invoice</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+cat > templates/core/invoice_detail.html <<EOF
+{% extends 'base.html' %}
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between">
+                <span>Invoice #{{ invoice.id }}</span>
+                <span class="badge {% if invoice.status == 'PAID' %}bg-success{% else %}bg-danger{% endif %}">{{ invoice.get_status_display }}</span>
+            </div>
+            <div class="card-body">
+                <h5>Billed To: {{ invoice.customer.name }}</h5>
+                <p class="text-muted">{{ invoice.date_created|date:"F d, Y" }}</p>
+
+                <table class="table mt-4">
+                    <thead>
+                        <tr><th>Description</th><th>Amount</th></tr>
+                    </thead>
+                    <tbody>
+                        {% if invoice.event %}
+                        <tr>
+                            <td>Event: {{ invoice.event.name }} (Budget)</td>
+                            <td>${{ invoice.event.budget }}</td>
+                        </tr>
+                        {% for rental in invoice.event.rentals.all %}
+                            {% for item in rental.items.all %}
+                            <tr>
+                                <td>{{ item.inventory_item.name }} (x{{ item.quantity }})</td>
+                                <td>$<script>document.write(({{ item.quantity }} * {{ item.price_at_booking }}).toFixed(2))</script></td>
+                            </tr>
+                            {% endfor %}
+                        {% endfor %}
+                        {% elif invoice.rental %}
+                            {% for item in invoice.rental.items.all %}
+                            <tr>
+                                <td>{{ item.inventory_item.name }} (x{{ item.quantity }})</td>
+                                <td>$<script>document.write(({{ item.quantity }} * {{ item.price_at_booking }}).toFixed(2))</script></td>
+                            </tr>
+                            {% endfor %}
+                            {% for job in invoice.rental.alterations.all %}
+                            <tr>
+                                <td>Seamstress Service: {{ job.description }}</td>
+                                <td>${{ job.price }}</td>
+                            </tr>
+                            {% endfor %}
+                        {% endif %}
+                        <tr class="table-active fw-bold">
+                            <td>Total</td>
+                            <td>${{ invoice.total_amount }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <a href="{% url 'invoice_print' pk=invoice.pk %}" target="_blank" class="btn btn-outline-secondary mt-3"><i class="bi bi-printer"></i> Print Invoice</a>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">Payment History</div>
+            <div class="card-body">
+                <ul class="list-group">
+                    {% for payment in invoice.payments.all %}
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>{{ payment.date }} - {{ payment.method }}</span>
+                        <span class="fw-bold">${{ payment.amount }}</span>
+                    </li>
+                    {% empty %}
+                    <li class="list-group-item text-muted">No payments recorded.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        {% if invoice.status != 'PAID' %}
+        <div class="card mb-3">
+            <div class="card-header bg-success text-white">Record Payment</div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    {{ form.as_p }}
+                    <button type="submit" class="btn btn-success w-100">Add Payment</button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

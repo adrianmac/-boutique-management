@@ -44,18 +44,19 @@ class SeamstressJobForm(forms.ModelForm):
         }
 
 class EventStep1Form(forms.ModelForm):
+    # Field to trigger "Add New Customer" logic if needed, though usually handled by JS/Link
     class Meta:
         model = Event
-        fields = ['name', 'customer', 'date', 'guest_count', 'location', 'description', 'base_cost', 'cost_per_guest']
+        fields = ['name', 'customer', 'date', 'guest_count', 'event_type', 'location', 'description', 'budget']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'customer': forms.Select(attrs={'class': 'form-select'}),
             'date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'guest_count': forms.NumberInput(attrs={'class': 'form-control'}),
+            'event_type': forms.Select(attrs={'class': 'form-select'}),
             'location': forms.TextInput(attrs={'class': 'form-control'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'base_cost': forms.NumberInput(attrs={'class': 'form-control'}),
-            'cost_per_guest': forms.NumberInput(attrs={'class': 'form-control'}),
+            'budget': forms.NumberInput(attrs={'class': 'form-control'}),
         }
 
 class PaymentForm(forms.ModelForm):

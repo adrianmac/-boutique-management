@@ -38,16 +38,22 @@ class InventoryLog(models.Model):
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
 
 class Event(models.Model):
+    EVENT_TYPE_CHOICES = [
+        ('WEDDING', 'Wedding'),
+        ('SWEET16', 'Sweet 16'),
+        ('QUINCE', 'Quinceañera'),
+        ('OTHER', 'Other'),
+    ]
     name = models.CharField(max_length=200)
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
     date = models.DateField()
     guest_count = models.PositiveIntegerField(default=0)
+    event_type = models.CharField(max_length=20, choices=EVENT_TYPE_CHOICES, default='OTHER')
     location = models.CharField(max_length=200, blank=True)
     description = models.TextField(blank=True, help_text="Event details")
 
     # Pricing
-    base_cost = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    cost_per_guest = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    budget = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
 
     def __str__(self):
         return f"{self.name} - {self.date}"
