@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card">
+    <div class="card-header">Select Decor Items (Tablecloths, Vases, etc.)</div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Price</th>
+                            <th>Available</th>
+                            <th>Quantity</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for entry in items %}
+                        <tr>
+                            <td>{{ entry.item.name }}</td>
+                            <td>${{ entry.item.rental_price }}</td>
+                            <td>{{ entry.avail }}</td>
+                            <td style="width: 150px;">
+                                <input type="number" name="qty_{{ entry.item.id }}" class="form-control" min="0" max="{{ entry.avail }}">
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="text-center">No decor items available on this date.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="d-flex justify-content-between mt-4">
+                <button type="submit" name="skip" class="btn btn-outline-secondary">Skip Decor Selection</button>
+                <button type="submit" class="btn btn-primary">Next: Confirm <i class="bi bi-arrow-right"></i></button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

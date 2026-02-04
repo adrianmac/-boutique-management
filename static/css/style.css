@@ -1,0 +1,53 @@
+:root {
+    --primary-color: #ffccd5; /* Light Pink */
+    --secondary-color: #fff0f3; /* Cream */
+    --accent-color: #593d3d; /* Dark Brown */
+    --text-color: #4a4a4a;
+    --btn-hover: #ffb3c1;
+}
+
+body {
+    background-color: var(--secondary-color);
+    font-family: 'Playfair Display', serif;
+    color: var(--text-color);
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: var(--accent-color);
+}
+
+.navbar {
+    background-color: white !important;
+    border-bottom: 3px solid var(--primary-color);
+}
+
+.navbar-brand {
+    font-weight: bold;
+    color: var(--accent-color) !important;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    color: var(--accent-color);
+    font-weight: bold;
+}
+
+.btn-primary:hover {
+    background-color: var(--btn-hover);
+    border-color: var(--btn-hover);
+    color: var(--accent-color);
+}
+
+.card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.card-header {
+    background-color: var(--primary-color);
+    color: var(--accent-color);
+    font-weight: bold;
+    border-radius: 15px 15px 0 0 !important;
+}

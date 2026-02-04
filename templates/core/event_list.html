@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Events</h2>
+    <a href="{% url 'event_wizard_step1' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Plan Event</a>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Event Name</th>
+                    <th>Date</th>
+                    <th>Customer</th>
+                    <th>Guests</th>
+                    <th>Location</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for event in events %}
+                <tr>
+                    <td>{{ event.name }}</td>
+                    <td>{{ event.date|date:"M d, Y" }}</td>
+                    <td>{{ event.customer.name }}</td>
+                    <td>{{ event.guest_count }}</td>
+                    <td>{{ event.location|default:"TBD" }}</td>
+                    <td><a href="{% url 'event_detail' pk=event.pk %}" class="btn btn-sm btn-outline-primary">View</a></td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="text-center">No events found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

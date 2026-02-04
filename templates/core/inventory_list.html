@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Inventory</h2>
+    <div>
+        <a href="{% url 'inventory_labels' %}" target="_blank" class="btn btn-outline-secondary me-2"><i class="bi bi-printer"></i> Print Labels</a>
+        <a href="{% url 'inventory_create' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Add Item</a>
+    </div>
+</div>
+
+<div class="card p-3 mb-4">
+    <form method="get" class="row g-2">
+        <div class="col-md-6">
+            <input type="text" name="q" class="form-control" placeholder="Search item, sku, description..." value="{{ query|default:'' }}">
+        </div>
+        <div class="col-md-4">
+            <select name="category" class="form-select">
+                <option value="">All Categories</option>
+                {% for code, name in categories %}
+                <option value="{{ code }}" {% if category == code %}selected{% endif %}>{{ name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2 d-grid">
+            <button type="submit" class="btn btn-outline-secondary">Filter</button>
+        </div>
+    </form>
+</div>
+
+<div class="row row-cols-1 row-cols-md-3 g-4">
+    {% for item in items %}
+    <div class="col">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="badge bg-info text-dark">{{ item.get_category_display }}</span>
+                    {% if item.sku %}<small class="text-muted">{{ item.sku }}</small>{% endif %}
+                </div>
+                <h5 class="card-title">{{ item.name }}</h5>
+                <p class="card-text text-muted">{{ item.description|truncatechars:50 }}</p>
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <span class="fw-bold text-primary">${{ item.rental_price }}</span>
+                    <span class="badge bg-light text-dark border">{{ item.total_quantity }} in stock</span>
+                </div>
+            </div>
+            <div class="card-footer bg-transparent border-top-0 d-grid">
+                <a href="{% url 'inventory_detail' pk=item.pk %}" class="btn btn-outline-primary btn-sm">View Details</a>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12 text-center py-5">
+        <p class="text-muted">No inventory items found.</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h2 class="mb-3">Welcome to Boutique Manager</h2>
+        <div class="d-flex gap-3 flex-wrap">
+            <a href="{% url 'event_wizard_step1' %}" class="btn btn-lg btn-primary flex-grow-1 py-4"><i class="bi bi-calendar-event fs-2 d-block"></i> Plan Event</a>
+            <a href="{% url 'rental_wizard_step1' %}" class="btn btn-lg btn-info flex-grow-1 py-4 text-white"><i class="bi bi-bag-check fs-2 d-block"></i> New Rental</a>
+            <a href="{% url 'seamstress_create' %}" class="btn btn-lg btn-warning flex-grow-1 py-4 text-dark"><i class="bi bi-scissors fs-2 d-block"></i> Seamstress Job</a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-primary text-white">Upcoming Events</div>
+            <ul class="list-group list-group-flush">
+                {% for event in recent_events %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>{{ event.name }}</strong><br>
+                        <small class="text-muted">{{ event.date|date:"M d" }}</small>
+                    </div>
+                    <a href="{% url 'event_detail' pk=event.pk %}" class="btn btn-sm btn-light">View</a>
+                </li>
+                {% empty %}
+                <li class="list-group-item">No upcoming events.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-info text-white">Active Rentals (Pickups/Returns)</div>
+            <ul class="list-group list-group-flush">
+                {% for rental in active_rentals %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>{{ rental.customer.name }}</strong><br>
+                        <small class="text-muted">Return: {{ rental.return_date|date:"M d" }}</small>
+                    </div>
+                    <span class="badge bg-secondary">{{ rental.status }}</span>
+                </li>
+                {% empty %}
+                <li class="list-group-item">No active rentals.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-warning text-dark">Pending Alterations</div>
+            <ul class="list-group list-group-flush">
+                {% for job in pending_jobs %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>{{ job.customer.name }}</strong><br>
+                        <small class="text-muted">Due: {{ job.due_date|date:"M d" }}</small>
+                    </div>
+                    <span class="badge bg-warning text-dark">{{ job.status }}</span>
+                </li>
+                {% empty %}
+                <li class="list-group-item">No pending jobs.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light border-danger">
+            <div class="card-body text-center d-flex flex-column justify-content-center">
+                <h1 class="display-1 text-danger">{{ overdue_invoices }}</h1>
+                <p class="lead text-danger">Unpaid Invoices Overdue</p>
+                <a href="{% url 'invoice_list' %}" class="btn btn-outline-danger">Manage Invoices</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

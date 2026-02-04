@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card border-primary">
+            <div class="card-header bg-primary text-white">Confirm Event</div>
+            <div class="card-body">
+                <h3>{{ data.name }}</h3>
+                <p><strong>Customer:</strong> {{ customer.name }}</p>
+                <p><strong>Date:</strong> {{ data.date }}</p>
+                <p><strong>Guests:</strong> {{ data.guest_count }}</p>
+                <hr>
+                <h5>Cost Breakdown</h5>
+                <ul class="list-group mb-3">
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Base Cost</span>
+                        <span>${{ base_cost }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Guest Cost ({{ data.guest_count }} x ${{ data.cost_per_guest }})</span>
+                        <span>${{ guest_cost }}</span>
+                    </li>
+                    {% for item in decor_items %}
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>{{ item.item.name }} (x{{ item.qty }})</span>
+                        <span>${{ item.total }}</span>
+                    </li>
+                    {% endfor %}
+                    <li class="list-group-item list-group-item-dark d-flex justify-content-between fw-bold">
+                        <span>Total Estimated</span>
+                        <span>${{ total }}</span>
+                    </li>
+                </ul>
+
+                <form method="post" class="d-grid">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-lg btn-success">Confirm & Create Event</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

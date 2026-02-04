@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between">
+                <span>Rental #{{ rental.id }}</span>
+                <span class="badge bg-light text-dark">{{ rental.get_status_display }}</span>
+            </div>
+            <div class="card-body">
+                <h5>Customer: <a href="{% url 'customer_detail' pk=rental.customer.pk %}">{{ rental.customer.name }}</a></h5>
+                <p>
+                    <strong>Period:</strong> {{ rental.rental_date }} to {{ rental.return_date }}<br>
+                    <strong>Event:</strong> {{ rental.event|default:"None" }}
+                </p>
+
+                <h6 class="mt-4">Items Rented</h6>
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Qty</th>
+                            <th>Price</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in rental.items.all %}
+                        <tr>
+                            <td>{{ item.inventory_item.name }}</td>
+                            <td>{{ item.quantity }}</td>
+                            <td>${{ item.price_at_booking }}</td>
+                            <td>$
+                                <script>document.write(({{ item.quantity }} * {{ item.price_at_booking }}).toFixed(2))</script>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        {% if rental.alterations.exists %}
+        <div class="card mb-4">
+            <div class="card-header">Seamstress Jobs</div>
+            <div class="card-body">
+                {% for job in rental.alterations.all %}
+                <div class="d-flex justify-content-between border-bottom py-2">
+                    <span>{{ job.description }}</span>
+                    <span class="badge bg-info text-dark">{{ job.get_status_display }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="col-md-4">
+        <div class="card mb-3">
+            <div class="card-header">Actions</div>
+            <div class="card-body d-grid gap-2">
+                {% if rental.invoice %}
+                <a href="{% url 'invoice_detail' pk=rental.invoice.pk %}" class="btn btn-outline-success">View Invoice</a>
+                {% endif %}
+                <!-- Add status change buttons here in future -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

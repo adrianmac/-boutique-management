@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2 class="mb-4">Reports & Analytics</h2>
+
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">Monthly Revenue (Paid Invoices)</div>
+            <div class="card-body">
+                <canvas id="revenueChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">Top Rented Items</div>
+            <div class="card-body">
+                <canvas id="itemsChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+    new Chart(revenueCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ revenue_labels|safe }},
+            datasets: [{
+                label: 'Revenue ($)',
+                data: {{ revenue_data|safe }},
+                backgroundColor: '#ffccd5',
+                borderColor: '#593d3d',
+                borderWidth: 1
+            }]
+        }
+    });
+
+    const itemsCtx = document.getElementById('itemsChart').getContext('2d');
+    new Chart(itemsCtx, {
+        type: 'doughnut',
+        data: {
+            labels: {{ item_labels|safe }},
+            datasets: [{
+                data: {{ item_data|safe }},
+                backgroundColor: ['#ffccd5', '#fff0f3', '#ffb3c1', '#c9184a', '#800f2f']
+            }]
+        }
+    });
+</script>
+{% endblock %}

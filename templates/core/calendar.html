@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Schedule: {{ current_month|date:"F Y" }}</h2>
+    <div>
+        <a href="?month={{ prev_month }}&year={{ prev_year }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Prev</a>
+        <a href="?month={{ next_month }}&year={{ next_year }}" class="btn btn-outline-secondary">Next <i class="bi bi-arrow-right"></i></a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <div class="row g-0 text-center fw-bold bg-light py-2">
+            <div class="col">Mon</div><div class="col">Tue</div><div class="col">Wed</div><div class="col">Thu</div><div class="col">Fri</div><div class="col">Sat</div><div class="col">Sun</div>
+        </div>
+        {% for week in calendar %}
+        <div class="row g-0" style="min-height: 120px;">
+            {% for day in week %}
+            <div class="col border p-1 {% if not day.is_current_month %}bg-light text-muted{% endif %} {% if day.is_today %}bg-info bg-opacity-10{% endif %}">
+                <div class="text-end mb-2">{{ day.date.day }}</div>
+
+                {% for event in day.events %}
+                <a href="{% url 'event_detail' pk=event.pk %}" class="badge bg-primary text-decoration-none d-block mb-1 text-truncate" title="{{ event.name }}">
+                    <i class="bi bi-calendar-event"></i> {{ event.name }}
+                </a>
+                {% endfor %}
+
+                {% for rental in day.rentals %}
+                <a href="{% url 'rental_detail' pk=rental.pk %}" class="badge bg-secondary text-decoration-none d-block mb-1 text-truncate" title="Rental for {{ rental.customer.name }}">
+                    <i class="bi bi-bag"></i> {{ rental.customer.name }}
+                </a>
+                {% endfor %}
+            </div>
+            {% endfor %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

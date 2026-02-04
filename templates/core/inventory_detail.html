@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row">
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-body text-center">
+                {% if qr_code %}
+                <img src="data:image/png;base64,{{ qr_code }}" alt="QR Code" class="img-fluid mb-3" style="max-width: 150px;">
+                {% endif %}
+                <h4>{{ item.name }}</h4>
+                <p class="text-muted">{{ item.sku|default:"No SKU" }}</p>
+                <div class="d-grid gap-2">
+                    <a href="{% url 'inventory_edit' pk=item.pk %}" class="btn btn-outline-primary">Edit Item</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header">Item Details</div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-6"><strong>Category:</strong></div>
+                    <div class="col-6">{{ item.get_category_display }}</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-6"><strong>Rental Price:</strong></div>
+                    <div class="col-6">${{ item.rental_price }}</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-6"><strong>Total Quantity:</strong></div>
+                    <div class="col-6">{{ item.total_quantity }}</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-6"><strong>Condition:</strong></div>
+                    <div class="col-6">{{ item.condition }}</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-6"><strong>Last Cleaned:</strong></div>
+                    <div class="col-6">{{ item.last_cleaned_date|default:"-" }}</div>
+                </div>
+                <div class="row">
+                    <div class="col-12"><strong>Description:</strong></div>
+                    <div class="col-12 text-muted">{{ item.description }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">History Log</div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Action</th>
+                            <th>Qty Change</th>
+                            <th>User</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in item.logs.all %}
+                        <tr>
+                            <td>{{ log.timestamp|date:"Y-m-d" }}</td>
+                            <td>{{ log.action }}</td>
+                            <td>{{ log.quantity_changed }}</td>
+                            <td>{{ log.user.username|default:"System" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="text-center">No history logs found.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

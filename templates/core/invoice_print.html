@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Invoice #{{ invoice.id }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: white; font-family: 'Times New Roman', serif; }
+        .invoice-box { max-width: 800px; margin: auto; padding: 30px; border: 1px solid #eee; }
+        @media print { .no-print { display: none; } }
+    </style>
+</head>
+<body>
+    <div class="text-center mt-3 no-print">
+        <button onclick="window.print()" class="btn btn-primary">Print</button>
+    </div>
+    <div class="invoice-box mt-4">
+        <div class="row">
+            <div class="col-6">
+                <h2>Boutique Manager</h2>
+                <p>123 Fashion Ave<br>City, State</p>
+            </div>
+            <div class="col-6 text-end">
+                <h3>INVOICE</h3>
+                <p>#{{ invoice.id }}<br>Date: {{ invoice.date_created|date:"Y-m-d" }}</p>
+            </div>
+        </div>
+        <hr>
+        <div class="row mb-4">
+            <div class="col-6">
+                <strong>Bill To:</strong><br>
+                {{ invoice.customer.name }}<br>
+                {{ invoice.customer.address }}
+            </div>
+        </div>
+        <table class="table table-bordered">
+            <thead>
+                <tr><th>Description</th><th class="text-end">Amount</th></tr>
+            </thead>
+            <tbody>
+                <!-- Same logic as detail view -->
+                 {% if invoice.event %}
+                    <tr>
+                        <td>Event Base Cost</td>
+                        <td class="text-end">${{ invoice.event.base_cost }}</td>
+                    </tr>
+                {% endif %}
+                <tr>
+                    <td>Total</td>
+                    <td class="text-end fw-bold">${{ invoice.total_amount }}</td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="text-center mt-5">
+            <p>Thank you for your business!</p>
+        </div>
+    </div>
+</body>
+</html>

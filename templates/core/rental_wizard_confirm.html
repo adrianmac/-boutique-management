@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card border-primary">
+            <div class="card-header bg-primary text-white">Step 4: Confirm Booking</div>
+            <div class="card-body">
+                <h4>Customer: {{ customer.name }}</h4>
+                <p>Dates: {{ data.rental_date }} to {{ data.return_date }}</p>
+
+                <table class="table mt-3">
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Qty</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in items %}
+                        <tr>
+                            <td>{{ row.item.name }}</td>
+                            <td>{{ row.qty }}</td>
+                            <td>${{ row.total }}</td>
+                        </tr>
+                        {% endfor %}
+                        {% if seamstress %}
+                        <tr>
+                            <td>Alterations ({{ seamstress.description }})</td>
+                            <td>1</td>
+                            <td>${{ seamstress.price }}</td>
+                        </tr>
+                        {% endif %}
+                        <tr class="table-active fw-bold">
+                            <td colspan="2">Total Estimated</td>
+                            <td>${{ total }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <form method="post" class="mt-4 d-grid">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-lg btn-success">Confirm & Generate Invoice</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

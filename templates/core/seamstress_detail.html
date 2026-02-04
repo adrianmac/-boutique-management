@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card">
+    <div class="card-header">Job Details</div>
+    <div class="card-body">
+        <h5>Customer: {{ job.customer.name }}</h5>
+        <p><strong>Due Date:</strong> {{ job.due_date }}</p>
+        <p><strong>Description:</strong> {{ job.description }}</p>
+        <p><strong>Price:</strong> ${{ job.price }}</p>
+
+        <form method="post" action="{% url 'seamstress_update_status' pk=job.pk %}" class="mt-3">
+            {% csrf_token %}
+            <label class="form-label">Update Status:</label>
+            <div class="input-group" style="max-width: 300px;">
+                <select name="status" class="form-select">
+                    <option value="PENDING" {% if job.status == 'PENDING' %}selected{% endif %}>Pending</option>
+                    <option value="IN_PROGRESS" {% if job.status == 'IN_PROGRESS' %}selected{% endif %}>In Progress</option>
+                    <option value="READY" {% if job.status == 'READY' %}selected{% endif %}>Ready for Pickup</option>
+                    <option value="COMPLETED" {% if job.status == 'COMPLETED' %}selected{% endif %}>Completed</option>
+                </select>
+                <button type="submit" class="btn btn-outline-primary">Update</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

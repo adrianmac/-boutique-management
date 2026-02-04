@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between">
+                <span>Invoice #{{ invoice.id }}</span>
+                <span class="badge {% if invoice.status == 'PAID' %}bg-success{% else %}bg-danger{% endif %}">{{ invoice.get_status_display }}</span>
+            </div>
+            <div class="card-body">
+                <h5>Billed To: {{ invoice.customer.name }}</h5>
+                <p class="text-muted">{{ invoice.date_created|date:"F d, Y" }}</p>
+
+                <table class="table mt-4">
+                    <thead>
+                        <tr><th>Description</th><th>Amount</th></tr>
+                    </thead>
+                    <tbody>
+                        {% if invoice.event %}
+                        <tr>
+                            <td>Event: {{ invoice.event.name }} (Base Cost)</td>
+                            <td>${{ invoice.event.base_cost }}</td>
+                        </tr>
+                        <tr>
+                            <td>Guest Fees ({{ invoice.event.guest_count }} guests)</td>
+                            <td>$<script>document.write({{ invoice.event.guest_count }} * {{ invoice.event.cost_per_guest }})</script></td>
+                        </tr>
+                        {% for rental in invoice.event.rentals.all %}
+                            {% for item in rental.items.all %}
+                            <tr>
+                                <td>{{ item.inventory_item.name }} (x{{ item.quantity }})</td>
+                                <td>$<script>document.write(({{ item.quantity }} * {{ item.price_at_booking }}).toFixed(2))</script></td>
+                            </tr>
+                            {% endfor %}
+                        {% endfor %}
+                        {% elif invoice.rental %}
+                            {% for item in invoice.rental.items.all %}
+                            <tr>
+                                <td>{{ item.inventory_item.name }} (x{{ item.quantity }})</td>
+                                <td>$<script>document.write(({{ item.quantity }} * {{ item.price_at_booking }}).toFixed(2))</script></td>
+                            </tr>
+                            {% endfor %}
+                            {% for job in invoice.rental.alterations.all %}
+                            <tr>
+                                <td>Seamstress Service: {{ job.description }}</td>
+                                <td>${{ job.price }}</td>
+                            </tr>
+                            {% endfor %}
+                        {% endif %}
+                        <tr class="table-active fw-bold">
+                            <td>Total</td>
+                            <td>${{ invoice.total_amount }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <a href="{% url 'invoice_print' pk=invoice.pk %}" target="_blank" class="btn btn-outline-secondary mt-3"><i class="bi bi-printer"></i> Print Invoice</a>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">Payment History</div>
+            <div class="card-body">
+                <ul class="list-group">
+                    {% for payment in invoice.payments.all %}
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>{{ payment.date }} - {{ payment.method }}</span>
+                        <span class="fw-bold">${{ payment.amount }}</span>
+                    </li>
+                    {% empty %}
+                    <li class="list-group-item text-muted">No payments recorded.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        {% if invoice.status != 'PAID' %}
+        <div class="card mb-3">
+            <div class="card-header bg-success text-white">Record Payment</div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    {{ form.as_p }}
+                    <button type="submit" class="btn btn-success w-100">Add Payment</button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
