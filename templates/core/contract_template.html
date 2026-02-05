@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Rental Contract #{{ rental.id }}</title>
+    <style>
+        body { font-family: 'Times New Roman', serif; max-width: 800px; margin: 40px auto; padding: 20px; }
+        h1, h2 { text-align: center; }
+        .section { margin-bottom: 20px; }
+        .signature-line { border-top: 1px solid black; width: 300px; margin-top: 50px; }
+        @media print { .no-print { display: none; } }
+    </style>
+</head>
+<body>
+    <div class="no-print">
+        <button onclick="window.print()">Print / Save PDF</button>
+    </div>
+
+    <h1>Rental Agreement</h1>
+    <h2>Boutique Management</h2>
+
+    <div class="section">
+        <p><strong>Date:</strong> {% now "F d, Y" %}</p>
+        <p><strong>Renter:</strong> {{ rental.customer.name }}</p>
+        <p><strong>Rental Period:</strong> {{ rental.rental_date }} to {{ rental.return_date }}</p>
+    </div>
+
+    <div class="section">
+        <h3>Items Rented</h3>
+        <ul>
+            {% for item in rental.items.all %}
+            <li>{{ item.quantity }}x {{ item.inventory_item.name }} - ${{ item.price_at_booking }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <div class="section">
+        <h3>Financials</h3>
+        <p><strong>Total Rental Fees:</strong> ${{ rental.invoice.total_amount }}</p>
+        <p><strong>Refundable Deposit:</strong> ${{ rental.deposit_amount }}</p>
+    </div>
+
+    <div class="section">
+        <h3>Terms and Conditions</h3>
+        <p>1. The Renter agrees to return all items by the Return Date.</p>
+        <p>2. A late fee of 0/day applies for late returns.</p>
+        <p>3. Items must be returned in the same condition as rented. Cleaning fees may apply.</p>
+        <p>4. The Deposit will be refunded within 3 days of return upon inspection.</p>
+        <p>5. The Boutique is not liable for any injuries sustained while using rented furniture.</p>
+    </div>
+
+    <div class="section" style="margin-top: 60px; display: flex; justify-content: space-between;">
+        <div>
+            <div class="signature-line"></div>
+            <p>Customer Signature</p>
+        </div>
+        <div>
+            <div class="signature-line"></div>
+            <p>Boutique Representative</p>
+        </div>
+    </div>
+</body>
+</html>

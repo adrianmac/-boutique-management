@@ -61,6 +61,7 @@
             <div class="card-body d-grid gap-2">
                 {% if rental.invoice %}
                 <a href="{% url 'invoice_detail' pk=rental.invoice.pk %}" class="btn btn-outline-success">View Invoice</a>
+                <a href="{% url "contract_generate" pk=rental.pk %}" target="_blank" class="btn btn-outline-dark">Generate Contract</a>
                 {% endif %}
                 <!-- Add status change buttons here in future -->
             </div>

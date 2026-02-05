@@ -42,6 +42,7 @@ def event_wizard_step1(request):
                     'location': form.cleaned_data['location'],
                     'description': form.cleaned_data['description'],
                     'budget': float(form.cleaned_data['budget']),
+                    'deposit_amount': float(form.cleaned_data.get('deposit_amount') or 0),
                 }
                 return redirect('event_wizard_step2')
         else:
@@ -128,7 +129,8 @@ def event_wizard_confirm(request):
             event_type=data.get('event_type', 'OTHER'),
             location=data['location'],
             description=data['description'],
-            budget=budget
+            budget=budget,
+            deposit_amount=Decimal(data.get('deposit_amount', 0))
         )
 
         if items_data:

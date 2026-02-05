@@ -73,6 +73,8 @@ class Event(models.Model):
 
     # Pricing
     budget = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    deposit_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    deposit_returned = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.name} - {self.date}"
@@ -90,6 +92,10 @@ class Rental(models.Model):
     return_date = models.DateField()
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='RESERVED')
     created_at = models.DateTimeField(auto_now_add=True)
+
+    # Pricing
+    deposit_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    deposit_returned = models.BooleanField(default=False)
 
     def __str__(self):
         return f"Rental #{self.id} for {self.customer.name}"

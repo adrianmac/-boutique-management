@@ -1,6 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
+from django.http import HttpResponse
 from .models import Customer, InventoryItem, Rental, RentalItem, SeamstressJob
 from .forms import RentalStep1Form, SeamstressJobForm
 from .services import get_available_quantity, create_invoice_for_rental
@@ -27,6 +28,7 @@ def rental_wizard_step1(request):
                 'customer_id': form.cleaned_data['customer'].id,
                 'rental_date': form.cleaned_data['rental_date'].isoformat(),
                 'return_date': form.cleaned_data['return_date'].isoformat(),
+                'deposit': float(form.cleaned_data.get('deposit') or 0),
             }
             return redirect('rental_wizard_step2')
     else:
@@ -120,13 +122,16 @@ def rental_wizard_confirm(request):
         seamstress_price = Decimal(seamstress_data['price'])
         total_est += seamstress_price
 
+    deposit = Decimal(data.get('deposit', 0))
+
     if request.method == 'POST':
         # SAVE EVERYTHING
         rental = Rental.objects.create(
             customer=customer,
             rental_date=data['rental_date'],
             return_date=data['return_date'],
-            status='RESERVED'
+            status='RESERVED',
+            deposit_amount=deposit
         )
 
         for item_id, qty in items_data.items():
@@ -148,7 +153,8 @@ def rental_wizard_confirm(request):
                 status='PENDING'
             )
 
-        # Generate Invoice
+        # Generate Invoice (Total does NOT include deposit usually, or does it?
+        # Usually Invoice = Service Fees. Deposit is separate. But for simplicity, we invoice the TOTAL fees.)
         create_invoice_for_rental(rental)
 
         # Clear session
@@ -165,5 +171,12 @@ def rental_wizard_confirm(request):
         'data': data,
         'items': display_items,
         'seamstress': seamstress_data,
-        'total': total_est
+        'total': total_est,
+        'deposit': deposit
     })
+
+@login_required
+def contract_generate(request, pk):
+    rental = get_object_or_404(Rental, pk=pk)
+    # Simple HTML Contract
+    return render(request, 'core/contract_template.html', {'rental': rental})

@@ -37,6 +37,7 @@ class RentalStep1Form(forms.Form):
     customer = forms.ModelChoiceField(queryset=Customer.objects.all(), widget=forms.Select(attrs={'class': 'form-select'}))
     rental_date = forms.DateField(widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}))
     return_date = forms.DateField(widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}))
+    deposit = forms.DecimalField(min_value=0, required=False, widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Optional deposit amount'}))
 
 class SeamstressJobForm(forms.ModelForm):
     class Meta:
@@ -52,7 +53,7 @@ class SeamstressJobForm(forms.ModelForm):
 class EventStep1Form(forms.ModelForm):
     class Meta:
         model = Event
-        fields = ['name', 'customer', 'date', 'guest_count', 'event_type', 'location', 'description', 'budget']
+        fields = ['name', 'customer', 'date', 'guest_count', 'event_type', 'location', 'description', 'budget', 'deposit_amount']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'customer': forms.Select(attrs={'class': 'form-select'}),
@@ -62,6 +63,7 @@ class EventStep1Form(forms.ModelForm):
             'location': forms.TextInput(attrs={'class': 'form-control'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'budget': forms.NumberInput(attrs={'class': 'form-control'}),
+            'deposit_amount': forms.NumberInput(attrs={'class': 'form-control'}),
         }
 
 class PaymentForm(forms.ModelForm):
