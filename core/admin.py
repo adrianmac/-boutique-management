@@ -24,3 +24,7 @@ admin.site.register(Rental, RentalAdmin)
 admin.site.register(SeamstressJob)
 admin.site.register(Invoice, InvoiceAdmin)
 admin.site.register(Payment)
+from .models import Service, EventService
+
+admin.site.register(Service)
+admin.site.register(EventService)

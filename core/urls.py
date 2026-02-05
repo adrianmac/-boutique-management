@@ -39,6 +39,7 @@ urlpatterns = [
     path('events/', views_event.event_list, name='event_list'),
     path('events/plan/step1/', views_event.event_wizard_step1, name='event_wizard_step1'),
     path('events/plan/step2/', views_event.event_wizard_step2, name='event_wizard_step2'),
+    path('events/plan/step3/', views_event.event_wizard_step3, name='event_wizard_step3'),
     path('events/plan/confirm/', views_event.event_wizard_confirm, name='event_wizard_confirm'),
     path('events/<int:pk>/', views_event.event_detail, name='event_detail'),
 

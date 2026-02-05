@@ -160,3 +160,22 @@ class Payment(models.Model):
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         self.invoice.update_status()
+
+class Service(models.Model):
+    name = models.CharField(max_length=100)
+    base_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    description = models.TextField(blank=True)
+
+    def __str__(self):
+        return self.name
+
+class EventService(models.Model):
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='services')
+    service = models.ForeignKey(Service, on_delete=models.PROTECT)
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    notes = models.CharField(max_length=200, blank=True)
+
+    def save(self, *args, **kwargs):
+        if not self.price:
+            self.price = self.service.base_price
+        super().save(*args, **kwargs)

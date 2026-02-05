@@ -1,10 +1,9 @@
-from .utils_email import send_notification_email
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.template.loader import render_to_string
 from django.http import HttpResponse
 from django.contrib import messages
-from .models import Customer, InventoryItem, Event, Rental, RentalItem
+from .models import Customer, InventoryItem, Event, Rental, RentalItem, Service, EventService
 from .forms import EventStep1Form
 from .services import get_available_quantity, create_invoice_for_event
 from decimal import Decimal
@@ -29,7 +28,6 @@ def event_detail(request, pk):
 @login_required
 def event_wizard_step1(request):
     """Step 1: Event Details"""
-    print("DEBUG: Entering event_wizard_step1", file=sys.stderr)
     try:
         if request.method == 'POST':
             form = EventStep1Form(request.POST)
@@ -49,7 +47,6 @@ def event_wizard_step1(request):
         else:
             form = EventStep1Form()
 
-        # DEBUG: Catch template rendering errors
         try:
             content = render_to_string('core/event_wizard_step1.html', {'form': form}, request=request)
             return HttpResponse(content)
@@ -71,7 +68,6 @@ def event_wizard_step2(request):
         return redirect('event_wizard_step1')
 
     event_date = data['date']
-
     items = InventoryItem.objects.filter(category='DECOR')
     available_items = []
 
@@ -83,7 +79,7 @@ def event_wizard_step2(request):
     if request.method == 'POST':
         if 'skip' in request.POST:
             request.session['event_items'] = {}
-            return redirect('event_wizard_confirm')
+            return redirect('event_wizard_step3')
 
         selected_items = {}
         for key, value in request.POST.items():
@@ -92,21 +88,45 @@ def event_wizard_step2(request):
                 selected_items[item_id] = int(value)
 
         request.session['event_items'] = selected_items
-        return redirect('event_wizard_confirm')
+        return redirect('event_wizard_step3')
 
     return render(request, 'core/event_wizard_step2.html', {'items': available_items})
 
 @login_required
+def event_wizard_step3(request):
+    """Step 3: Select Services (DJ, etc.)"""
+    if not request.session.get('event_data'):
+        return redirect('event_wizard_step1')
+
+    services = Service.objects.all()
+
+    if request.method == 'POST':
+        if 'skip' in request.POST:
+            request.session['event_services'] = {}
+            return redirect('event_wizard_confirm')
+
+        selected_services = {}
+        for key, value in request.POST.items():
+            if key.startswith('srv_') and value == 'on':
+                srv_id = int(key.split('_')[1])
+                selected_services[srv_id] = True
+
+        request.session['event_services'] = selected_services
+        return redirect('event_wizard_confirm')
+
+    return render(request, 'core/event_wizard_step3.html', {'services': services})
+
+@login_required
 def event_wizard_confirm(request):
-    """Step 3: Confirmation"""
+    """Step 4: Confirmation"""
     data = request.session.get('event_data')
-    items_data = request.session.get('event_items')
+    items_data = request.session.get('event_items', {})
+    services_data = request.session.get('event_services', {})
 
     if not data:
         return redirect('event_wizard_step1')
 
     customer = Customer.objects.get(id=data['customer_id'])
-
     budget = Decimal(data['budget'])
 
     decor_items = []
@@ -119,7 +139,16 @@ def event_wizard_confirm(request):
             decor_total += line_total
             decor_items.append({'item': item, 'qty': qty, 'total': line_total})
 
-    total_est = budget + decor_total
+    service_items = []
+    service_total = Decimal('0.00')
+
+    if services_data:
+        for srv_id in services_data.keys():
+            srv = Service.objects.get(id=srv_id)
+            service_total += srv.base_price
+            service_items.append(srv)
+
+    total_est = budget + decor_total + service_total
 
     if request.method == 'POST':
         event = Event.objects.create(
@@ -151,13 +180,21 @@ def event_wizard_confirm(request):
                     price_at_booking=inv_item.rental_price
                 )
 
+        if services_data:
+            for srv_id in services_data.keys():
+                srv = Service.objects.get(id=srv_id)
+                EventService.objects.create(
+                    event=event,
+                    service=srv,
+                    price=srv.base_price
+                )
+
         create_invoice_for_event(event)
 
         del request.session['event_data']
-        if 'event_items' in request.session:
-            del request.session['event_items']
+        if 'event_items' in request.session: del request.session['event_items']
+        if 'event_services' in request.session: del request.session['event_services']
 
-        send_notification_email(customer, "Event Confirmation", "email_event_confirm.html", {"event": event})
         messages.success(request, "Event created successfully!")
         return redirect('event_detail', pk=event.pk)
 
@@ -165,6 +202,7 @@ def event_wizard_confirm(request):
         'data': data,
         'customer': customer,
         'decor_items': decor_items,
+        'service_items': service_items,
         'budget': budget,
         'total': total_est
     })

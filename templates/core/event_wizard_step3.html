@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card">
+    <div class="card-header">Step 3: Select Additional Services</div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <div class="list-group mb-4">
+                {% for service in services %}
+                <label class="list-group-item d-flex gap-3">
+                    <input class="form-check-input flex-shrink-0" type="checkbox" name="srv_{{ service.id }}" style="font-size: 1.375em;">
+                    <span class="pt-1 form-checked-content">
+                        <strong>{{ service.name }}</strong>
+                        <small class="d-block text-muted">{{ service.description }}</small>
+                        <span class="badge bg-success">${{ service.base_price }}</span>
+                    </span>
+                </label>
+                {% empty %}
+                <p class="text-muted">No services available.</p>
+                {% endfor %}
+            </div>
+            <div class="d-flex justify-content-between mt-4">
+                <button type="submit" name="skip" class="btn btn-outline-secondary">Skip Services</button>
+                <button type="submit" class="btn btn-primary">Next: Confirm <i class="bi bi-arrow-right"></i></button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+cat > templates/core/event_wizard_confirm.html <<EOF
+{% extends 'base.html' %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card border-primary">
+            <div class="card-header bg-primary text-white">Confirm Event</div>
+            <div class="card-body">
+                <h3>{{ data.name }}</h3>
+                <p><strong>Customer:</strong> {{ customer.name }}</p>
+                <p><strong>Date:</strong> {{ data.date }}</p>
+                <p><strong>Guests:</strong> {{ data.guest_count }}</p>
+                <p><strong>Type:</strong> {{ data.event_type }}</p>
+                <hr>
+                <h5>Cost Breakdown</h5>
+                <ul class="list-group mb-3">
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Event Budget</span>
+                        <span>${{ budget }}</span>
+                    </li>
+                    {% for item in decor_items %}
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>{{ item.item.name }} (x{{ item.qty }})</span>
+                        <span>${{ item.total }}</span>
+                    </li>
+                    {% endfor %}
+                    {% for srv in service_items %}
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Service: {{ srv.name }}</span>
+                        <span>${{ srv.base_price }}</span>
+                    </li>
+                    {% endfor %}
+                    <li class="list-group-item list-group-item-dark d-flex justify-content-between fw-bold">
+                        <span>Total Estimated</span>
+                        <span>${{ total }}</span>
+                    </li>
+                </ul>
+
+                <form method="post" class="d-grid">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-lg btn-success">Confirm & Create Event</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+# Update Event Detail to show services
+sed -i '/Decor Rentals/i \        <div class="card mb-4">\n            <div class="card-header">Services</div>\n            <ul class="list-group list-group-flush">\n                {% for es in event.services.all %}\n                <li class="list-group-item d-flex justify-content-between">\n                    <span>{{ es.service.name }}</span>\n                    <span>${{ es.price }}</span>\n                </li>\n                {% empty %}\n                <li class="list-group-item text-muted">No additional services.</li>\n                {% endfor %}\n            </ul>\n        </div>' templates/core/event_detail.html
+
+# Update Invoice Detail to show services
+sed -i '/{% if invoice.event %}/a \                        {% for es in invoice.event.services.all %}\n                        <tr>\n                            <td>Service: {{ es.service.name }}</td>\n                            <td>${{ es.price }}</td>\n                        </tr>\n                        {% endfor %}' templates/core/invoice_detail.html

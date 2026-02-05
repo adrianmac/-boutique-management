@@ -45,7 +45,11 @@ def calculate_event_total(event):
     for rental in event.rentals.all():
         decor_total += calculate_rental_total(rental)
 
-    return budget + decor_total
+    service_total = Decimal("0.00")
+    for srv in event.services.all():
+        service_total += srv.price
+
+    return budget + decor_total + service_total
 
 def create_invoice_for_rental(rental):
     """
