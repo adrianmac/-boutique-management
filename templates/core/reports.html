@@ -3,16 +3,29 @@
 <h2 class="mb-4">Reports & Analytics</h2>
 
 <div class="row">
+    <!-- Monthly Revenue -->
     <div class="col-md-6 mb-4">
-        <div class="card">
+        <div class="card h-100">
             <div class="card-header">Monthly Revenue (Paid Invoices)</div>
             <div class="card-body">
                 <canvas id="revenueChart"></canvas>
             </div>
         </div>
     </div>
+
+    <!-- Revenue by Event Type -->
     <div class="col-md-6 mb-4">
-        <div class="card">
+        <div class="card h-100">
+            <div class="card-header">Revenue by Event Type</div>
+            <div class="card-body">
+                <canvas id="eventTypeChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Items -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
             <div class="card-header">Top Rented Items</div>
             <div class="card-body">
                 <canvas id="itemsChart"></canvas>
@@ -22,6 +35,7 @@
 </div>
 
 <script>
+    // 1. Revenue Bar Chart
     const revenueCtx = document.getElementById('revenueChart').getContext('2d');
     new Chart(revenueCtx, {
         type: 'bar',
@@ -34,9 +48,25 @@
                 borderColor: '#593d3d',
                 borderWidth: 1
             }]
+        },
+        options: { scales: { y: { beginAtZero: true } } }
+    });
+
+    // 2. Event Type Pie Chart
+    const eventTypeCtx = document.getElementById('eventTypeChart').getContext('2d');
+    new Chart(eventTypeCtx, {
+        type: 'pie',
+        data: {
+            labels: {{ event_type_labels|safe }},
+            datasets: [{
+                data: {{ event_type_data|safe }},
+                backgroundColor: ['#ffb3c1', '#a2d2ff', '#cdb4db', '#bde0fe', '#ffc8dd'],
+                hoverOffset: 4
+            }]
         }
     });
 
+    // 3. Top Items Doughnut Chart
     const itemsCtx = document.getElementById('itemsChart').getContext('2d');
     new Chart(itemsCtx, {
         type: 'doughnut',

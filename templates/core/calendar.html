@@ -1,5 +1,13 @@
 {% extends 'base.html' %}
 {% block content %}
+<style>
+    .event-wedding { background-color: #ffccd5; color: #593d3d; border: 1px solid #ffb3c1; }
+    .event-sweet16 { background-color: #e0c3fc; color: #3c096c; border: 1px solid #c77dff; }
+    .event-quince { background-color: #bde0fe; color: #023e8a; border: 1px solid #a2d2ff; }
+    .event-other { background-color: #e9ecef; color: #495057; border: 1px solid #dee2e6; }
+    .rental-badge { background-color: #fff0f3; color: #a4133c; border: 1px dashed #ffb3c1; }
+</style>
+
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2>Schedule: {{ current_month|date:"F Y" }}</h2>
     <div>
@@ -20,13 +28,15 @@
                 <div class="text-end mb-2">{{ day.date.day }}</div>
 
                 {% for event in day.events %}
-                <a href="{% url 'event_detail' pk=event.pk %}" class="badge bg-primary text-decoration-none d-block mb-1 text-truncate" title="{{ event.name }}">
+                {% with type=event.event_type %}
+                <a href="{% url 'event_detail' pk=event.pk %}" class="badge text-decoration-none d-block mb-1 text-truncate p-2 {% if type == 'WEDDING' %}event-wedding{% elif type == 'SWEET16' %}event-sweet16{% elif type == 'QUINCE' %}event-quince{% else %}event-other{% endif %}" title="{{ event.name }}">
                     <i class="bi bi-calendar-event"></i> {{ event.name }}
                 </a>
+                {% endwith %}
                 {% endfor %}
 
                 {% for rental in day.rentals %}
-                <a href="{% url 'rental_detail' pk=rental.pk %}" class="badge bg-secondary text-decoration-none d-block mb-1 text-truncate" title="Rental for {{ rental.customer.name }}">
+                <a href="{% url 'rental_detail' pk=rental.pk %}" class="badge rental-badge text-decoration-none d-block mb-1 text-truncate p-1" title="Rental for {{ rental.customer.name }}">
                     <i class="bi bi-bag"></i> {{ rental.customer.name }}
                 </a>
                 {% endfor %}

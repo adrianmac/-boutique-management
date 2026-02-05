@@ -67,7 +67,9 @@ def calendar_view(request):
 @login_required
 def reports_view(request):
     today = date.today()
-    labels = []
+
+    # 1. Monthly Revenue
+    revenue_labels = []
     revenue_data = []
 
     for i in range(5, -1, -1):
@@ -86,9 +88,10 @@ def reports_view(request):
             status='PAID'
         ).aggregate(Sum('total_amount'))['total_amount__sum'] or 0
 
-        labels.append(month_start.strftime("%B"))
+        revenue_labels.append(month_start.strftime("%B"))
         revenue_data.append(float(total))
 
+    # 2. Top Items
     top_items = RentalItem.objects.values('inventory_item__name').annotate(
         total_qty=Sum('quantity')
     ).order_by('-total_qty')[:5]
@@ -96,9 +99,25 @@ def reports_view(request):
     item_labels = [x['inventory_item__name'] for x in top_items]
     item_data = [x['total_qty'] for x in top_items]
 
+    # 3. Revenue by Event Type
+    event_revenue = Invoice.objects.filter(
+        event__isnull=False,
+        status='PAID'
+    ).values('event__event_type').annotate(
+        total=Sum('total_amount')
+    ).order_by('-total')
+
+    # Map display names
+    event_type_display = dict(Event.EVENT_TYPE_CHOICES)
+
+    event_type_labels = [event_type_display.get(x['event__event_type'], x['event__event_type']) for x in event_revenue]
+    event_type_data = [float(x['total']) for x in event_revenue]
+
     return render(request, 'core/reports.html', {
-        'revenue_labels': json.dumps(labels),
+        'revenue_labels': json.dumps(revenue_labels),
         'revenue_data': json.dumps(revenue_data),
         'item_labels': json.dumps(item_labels),
-        'item_data': json.dumps(item_data)
+        'item_data': json.dumps(item_data),
+        'event_type_labels': json.dumps(event_type_labels),
+        'event_type_data': json.dumps(event_type_data),
     })
