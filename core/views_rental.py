@@ -1,3 +1,4 @@
+from .utils_email import send_notification_email
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
@@ -163,6 +164,7 @@ def rental_wizard_confirm(request):
         if 'seamstress_data' in request.session:
             del request.session['seamstress_data']
 
+        send_notification_email(customer, "Rental Confirmation", "email_rental_confirm.html", {"rental": rental})
         messages.success(request, "Rental booking created successfully!")
         return redirect('rental_detail', pk=rental.pk)
 

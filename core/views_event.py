@@ -1,3 +1,4 @@
+from .utils_email import send_notification_email
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.template.loader import render_to_string
@@ -156,6 +157,7 @@ def event_wizard_confirm(request):
         if 'event_items' in request.session:
             del request.session['event_items']
 
+        send_notification_email(customer, "Event Confirmation", "email_event_confirm.html", {"event": event})
         messages.success(request, "Event created successfully!")
         return redirect('event_detail', pk=event.pk)
 

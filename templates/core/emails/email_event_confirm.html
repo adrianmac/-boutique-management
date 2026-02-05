@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<body>
+    <h2>Event Booking Confirmation</h2>
+    <p>Dear {{ event.customer.name }},</p>
+    <p>We are excited to help with your event!</p>
+    <ul>
+        <li><strong>Event:</strong> {{ event.name }}</li>
+        <li><strong>Date:</strong> {{ event.date }}</li>
+        <li><strong>Guests:</strong> {{ event.guest_count }}</li>
+    </ul>
+    <p>We have reserved the necessary decor items.</p>
+    <p>Best regards,<br>Boutique Management</p>
+</body>
+</html>

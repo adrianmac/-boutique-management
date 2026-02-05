@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<body>
+    <h2>Rental Confirmation</h2>
+    <p>Dear {{ rental.customer.name }},</p>
+    <p>Thank you for your rental! Here are the details:</p>
+    <ul>
+        <li><strong>Order ID:</strong> #{{ rental.id }}</li>
+        <li><strong>Dates:</strong> {{ rental.rental_date }} to {{ rental.return_date }}</li>
+        <li><strong>Items:</strong> {{ rental.items.count }}</li>
+    </ul>
+    <p>Please confirm your deposit of ${{ rental.deposit_amount }} has been recorded.</p>
+    <p>Best regards,<br>Boutique Management</p>
+</body>
+</html>

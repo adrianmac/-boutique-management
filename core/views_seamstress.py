@@ -2,6 +2,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import SeamstressJob, Customer
 from .forms import SeamstressJobForm, CustomerForm
+from .utils_email import send_notification_email
 
 @login_required
 def seamstress_list(request):
@@ -15,13 +16,6 @@ def seamstress_detail(request, pk):
 
 @login_required
 def seamstress_create_standalone(request):
-    """Create a job without a rental"""
-    # Simple 2-step: Select Customer -> Enter Job Details (Or simple 1 page if customer exists)
-    # For MVP, let's assume we select customer first or create new.
-    # To keep it simple, I'll use a form that only handles job details and requires a customer ID in URL or select from list.
-    pass
-    # Actually, let's just make a generic create view where you select customer.
-
     if request.method == 'POST':
         form = SeamstressJobForm(request.POST)
         customer_id = request.POST.get('customer')
@@ -42,6 +36,11 @@ def seamstress_update_status(request, pk):
     if request.method == 'POST':
         status = request.POST.get('status')
         if status in dict(SeamstressJob.STATUS_CHOICES):
+            old_status = job.status
             job.status = status
             job.save()
+
+            if status == 'READY' and old_status != 'READY':
+                send_notification_email(job.customer, "Your Alterations are Ready", "email_job_ready.html", {"job": job})
+
     return redirect('seamstress_detail', pk=pk)
