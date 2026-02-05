@@ -3,6 +3,56 @@
 <div class="row mb-4">
     <div class="col-md-12">
         <h2 class="mb-3">Welcome to Boutique Manager</h2>
+
+        <!-- Action Items -->
+        <div class="card border-primary mb-4">
+            <div class="card-header bg-primary text-white"><i class="bi bi-check-circle"></i> Today's Action Items</div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <h6 class="text-primary">Rentals to Prepare</h6>
+                        <ul class="list-unstyled">
+                            {% for r in actions.rentals_start %}
+                            <li><a href="{% url 'rental_detail' pk=r.pk %}" class="text-decoration-none">#{{ r.id }} - {{ r.customer.name }}</a></li>
+                            {% empty %}
+                            <li class="text-muted small">None</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    <div class="col-md-3">
+                        <h6 class="text-danger">Returns Due</h6>
+                        <ul class="list-unstyled">
+                            {% for r in actions.rentals_return %}
+                            <li><a href="{% url 'rental_detail' pk=r.pk %}" class="text-decoration-none">#{{ r.id }} - {{ r.customer.name }}</a></li>
+                            {% empty %}
+                            <li class="text-muted small">None</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    <div class="col-md-3">
+                        <h6 class="text-warning">Seamstress Jobs Due</h6>
+                        <ul class="list-unstyled">
+                            {% for j in actions.jobs_due %}
+                            <li><a href="{% url 'seamstress_detail' pk=j.pk %}" class="text-decoration-none">{{ j.customer.name }}</a></li>
+                            {% empty %}
+                            <li class="text-muted small">None</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    <div class="col-md-3">
+                        <h6 class="text-info">Events Today</h6>
+                        <ul class="list-unstyled">
+                            {% for e in actions.events_today %}
+                            <li><a href="{% url 'event_detail' pk=e.pk %}" class="text-decoration-none">{{ e.name }}</a></li>
+                            {% empty %}
+                            <li class="text-muted small">None</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="d-flex gap-3 flex-wrap">
             <a href="{% url 'event_wizard_step1' %}" class="btn btn-lg btn-primary flex-grow-1 py-4"><i class="bi bi-calendar-event fs-2 d-block"></i> Plan Event</a>
             <a href="{% url 'rental_wizard_step1' %}" class="btn btn-lg btn-info flex-grow-1 py-4 text-white"><i class="bi bi-bag-check fs-2 d-block"></i> New Rental</a>

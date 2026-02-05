@@ -10,7 +10,16 @@ import json
 def dashboard(request):
     today = date.today()
 
+    # Action Items
+    actions = {
+        'rentals_start': Rental.objects.filter(rental_date=today, status='RESERVED'),
+        'rentals_return': Rental.objects.filter(return_date=today, status='PICKED_UP'),
+        'jobs_due': SeamstressJob.objects.filter(due_date=today).exclude(status='COMPLETED'),
+        'events_today': Event.objects.filter(date=today),
+    }
+
     context = {
+        'actions': actions,
         'recent_events': Event.objects.filter(date__gte=today).order_by('date')[:5],
         'active_rentals': Rental.objects.filter(status__in=['RESERVED', 'PICKED_UP']).order_by('rental_date')[:5],
         'pending_jobs': SeamstressJob.objects.filter(status__in=['PENDING', 'IN_PROGRESS']).order_by('due_date')[:5],
@@ -107,7 +116,6 @@ def reports_view(request):
         total=Sum('total_amount')
     ).order_by('-total')
 
-    # Map display names
     event_type_display = dict(Event.EVENT_TYPE_CHOICES)
 
     event_type_labels = [event_type_display.get(x['event__event_type'], x['event__event_type']) for x in event_revenue]
