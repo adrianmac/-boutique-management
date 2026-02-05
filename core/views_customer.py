@@ -25,10 +25,13 @@ def customer_detail(request, pk):
 
 @login_required
 def customer_create(request):
+    next_url = request.GET.get('next')
     if request.method == 'POST':
         form = CustomerForm(request.POST)
         if form.is_valid():
             customer = form.save()
+            if next_url:
+                return redirect(next_url)
             return redirect('customer_detail', pk=customer.pk)
     else:
         form = CustomerForm()

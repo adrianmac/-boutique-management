@@ -1,15 +1,24 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
+from django.template.loader import render_to_string
+from django.http import HttpResponse
 from django.contrib import messages
 from .models import Customer, InventoryItem, Event, Rental, RentalItem
 from .forms import EventStep1Form
 from .services import get_available_quantity, create_invoice_for_event
 from decimal import Decimal
+import traceback
+import sys
 
 @login_required
 def event_list(request):
-    events = Event.objects.all().order_by('-date')
-    return render(request, 'core/event_list.html', {'events': events})
+    try:
+        events = Event.objects.all().order_by('-date')
+        return render(request, 'core/event_list.html', {'events': events})
+    except Exception as e:
+        print(f"ERROR in event_list: {e}", file=sys.stderr)
+        traceback.print_exc()
+        return HttpResponse(f"Error in event_list: {e}", status=500)
 
 @login_required
 def event_detail(request, pk):
@@ -19,24 +28,38 @@ def event_detail(request, pk):
 @login_required
 def event_wizard_step1(request):
     """Step 1: Event Details"""
-    if request.method == 'POST':
-        form = EventStep1Form(request.POST)
-        if form.is_valid():
-            request.session['event_data'] = {
-                'name': form.cleaned_data['name'],
-                'customer_id': form.cleaned_data['customer'].id,
-                'date': form.cleaned_data['date'].isoformat(),
-                'guest_count': form.cleaned_data['guest_count'],
-                'event_type': form.cleaned_data['event_type'],
-                'location': form.cleaned_data['location'],
-                'description': form.cleaned_data['description'],
-                'budget': float(form.cleaned_data['budget']),
-            }
-            return redirect('event_wizard_step2')
-    else:
-        form = EventStep1Form()
+    print("DEBUG: Entering event_wizard_step1", file=sys.stderr)
+    try:
+        if request.method == 'POST':
+            form = EventStep1Form(request.POST)
+            if form.is_valid():
+                request.session['event_data'] = {
+                    'name': form.cleaned_data['name'],
+                    'customer_id': form.cleaned_data['customer'].id,
+                    'date': form.cleaned_data['date'].isoformat(),
+                    'guest_count': form.cleaned_data['guest_count'],
+                    'event_type': form.cleaned_data['event_type'],
+                    'location': form.cleaned_data['location'],
+                    'description': form.cleaned_data['description'],
+                    'budget': float(form.cleaned_data['budget']),
+                }
+                return redirect('event_wizard_step2')
+        else:
+            form = EventStep1Form()
 
-    return render(request, 'core/event_wizard_step1.html', {'form': form})
+        # DEBUG: Catch template rendering errors
+        try:
+            content = render_to_string('core/event_wizard_step1.html', {'form': form}, request=request)
+            return HttpResponse(content)
+        except Exception as tpl_e:
+            print(f"TEMPLATE ERROR in event_wizard_step1: {tpl_e}", file=sys.stderr)
+            traceback.print_exc()
+            return HttpResponse(f"Template Error: {tpl_e}", status=500)
+
+    except Exception as e:
+        print(f"CRITICAL ERROR in event_wizard_step1: {e}", file=sys.stderr)
+        traceback.print_exc()
+        return HttpResponse(f"Server Error: {e}", status=500)
 
 @login_required
 def event_wizard_step2(request):
@@ -47,12 +70,10 @@ def event_wizard_step2(request):
 
     event_date = data['date']
 
-    # Filter for DECOR category only
     items = InventoryItem.objects.filter(category='DECOR')
     available_items = []
 
     for item in items:
-        # Check availability for the single day
         avail = get_available_quantity(item, event_date, event_date)
         if avail > 0:
             available_items.append({'item': item, 'avail': avail})
@@ -84,7 +105,6 @@ def event_wizard_confirm(request):
 
     customer = Customer.objects.get(id=data['customer_id'])
 
-    # Calculate costs
     budget = Decimal(data['budget'])
 
     decor_items = []
@@ -100,7 +120,6 @@ def event_wizard_confirm(request):
     total_est = budget + decor_total
 
     if request.method == 'POST':
-        # Create Event
         event = Event.objects.create(
             name=data['name'],
             customer=customer,
@@ -112,7 +131,6 @@ def event_wizard_confirm(request):
             budget=budget
         )
 
-        # Create Rental for Decor if items selected
         if items_data:
             rental = Rental.objects.create(
                 customer=customer,
@@ -130,10 +148,8 @@ def event_wizard_confirm(request):
                     price_at_booking=inv_item.rental_price
                 )
 
-        # Generate Invoice
         create_invoice_for_event(event)
 
-        # Clear session
         del request.session['event_data']
         if 'event_items' in request.session:
             del request.session['event_items']

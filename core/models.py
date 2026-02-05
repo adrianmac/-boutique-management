@@ -41,7 +41,7 @@ class Event(models.Model):
     EVENT_TYPE_CHOICES = [
         ('WEDDING', 'Wedding'),
         ('SWEET16', 'Sweet 16'),
-        ('QUINCE', 'Quinceañera'),
+        ('QUINCE', 'Quinceanera'),
         ('OTHER', 'Other'),
     ]
     name = models.CharField(max_length=200)
