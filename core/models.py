@@ -3,10 +3,24 @@ from django.contrib.auth.models import User
 from decimal import Decimal
 
 class Customer(models.Model):
+    STATUS_CHOICES = [
+        ('ACTIVE', 'Active'),
+        ('VIP', 'VIP'),
+        ('INACTIVE', 'Inactive'),
+    ]
     name = models.CharField(max_length=100)
     email = models.EmailField(blank=True, null=True)
     phone = models.CharField(max_length=20, blank=True, null=True)
     address = models.TextField(blank=True, null=True)
+
+    # New Fields
+    birthday = models.DateField(blank=True, null=True)
+    notes = models.TextField(blank=True, null=True)
+    bust = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True, help_text="Bust measurement (inches)")
+    waist = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True, help_text="Waist measurement (inches)")
+    hips = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True, help_text="Hips measurement (inches)")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='ACTIVE')
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -15,8 +29,13 @@ class Customer(models.Model):
 class InventoryItem(models.Model):
     CATEGORY_CHOICES = [
         ('DRESS', 'Dress'),
-        ('DECOR', 'Decor (Tablecloth, Vase, etc.)'),
+        ('SHOES', 'Shoes'),
         ('ACCESSORY', 'Accessory'),
+        ('LINENS', 'Linens'),
+        ('CHAIR_COVER', 'Chair Cover'),
+        ('TABLECLOTH', 'Tablecloth'),
+        ('FURNITURE', 'Furniture'),
+        ('DECOR', 'Other Decor (Vase, etc.)'),
     ]
     name = models.CharField(max_length=100)
     category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default='DRESS')

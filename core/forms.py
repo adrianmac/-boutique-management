@@ -4,12 +4,18 @@ from .models import Customer, InventoryItem, Event, Rental, SeamstressJob, Payme
 class CustomerForm(forms.ModelForm):
     class Meta:
         model = Customer
-        fields = ['name', 'email', 'phone', 'address']
+        fields = ['name', 'email', 'phone', 'address', 'birthday', 'status', 'bust', 'waist', 'hips', 'notes']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'email': forms.EmailInput(attrs={'class': 'form-control'}),
             'phone': forms.TextInput(attrs={'class': 'form-control'}),
-            'address': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'address': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+            'birthday': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'status': forms.Select(attrs={'class': 'form-select'}),
+            'bust': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.1'}),
+            'waist': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.1'}),
+            'hips': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.1'}),
+            'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
 
 class InventoryItemForm(forms.ModelForm):
@@ -44,7 +50,6 @@ class SeamstressJobForm(forms.ModelForm):
         }
 
 class EventStep1Form(forms.ModelForm):
-    # Field to trigger "Add New Customer" logic if needed, though usually handled by JS/Link
     class Meta:
         model = Event
         fields = ['name', 'customer', 'date', 'guest_count', 'event_type', 'location', 'description', 'budget']
