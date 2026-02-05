@@ -9,12 +9,15 @@
                     {% csrf_token %}
                     <div class="mb-3">
                         <label class="form-label">Customer</label>
-                        <select name="customer" class="form-select" required>
-                            <option value="">Select Customer...</option>
-                            {% for c in customers %}
-                            <option value="{{ c.id }}">{{ c.name }}</option>
-                            {% endfor %}
-                        </select>
+                        <div class="input-group">
+                            <select name="customer" class="form-select" required>
+                                <option value="">Select Customer...</option>
+                                {% for c in customers %}
+                                <option value="{{ c.id }}">{{ c.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <a href="{% url 'customer_create' %}" class="btn btn-outline-primary" target="_blank" title="Add New Customer"><i class="bi bi-person-plus"></i></a>
+                        </div>
                     </div>
                     {{ form.as_p }}
                     <button type="submit" class="btn btn-primary">Create Job</button>
