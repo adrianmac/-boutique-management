@@ -2,6 +2,7 @@ from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.db.models import Sum, Count, Q
 from .models import Rental, Event, InventoryItem, SeamstressJob, Invoice, RentalItem
+from collections import defaultdict
 from datetime import date, timedelta
 import calendar as cal_module
 import json
@@ -40,14 +41,22 @@ def calendar_view(request):
     end_date = month_days[-1][-1]
 
     events = Event.objects.filter(date__range=(start_date, end_date))
-    rentals = Rental.objects.filter(rental_date__range=(start_date, end_date))
+    rentals = Rental.objects.filter(rental_date__range=(start_date, end_date)).select_related('customer')
+
+    events_by_date = defaultdict(list)
+    for event in events:
+        events_by_date[event.date].append(event)
+
+    rentals_by_date = defaultdict(list)
+    for rental in rentals:
+        rentals_by_date[rental.rental_date].append(rental)
 
     calendar_data = []
     for week in month_days:
         week_data = []
         for day in week:
-            day_events = events.filter(date=day)
-            day_rentals = rentals.filter(rental_date=day)
+            day_events = events_by_date[day]
+            day_rentals = rentals_by_date[day]
 
             is_today = (day == today)
             is_current_month = (day.month == month)

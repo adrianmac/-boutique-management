@@ -72,3 +72,39 @@ class ServiceTests(TestCase):
 
         invoice = create_invoice_for_event(event)
         self.assertEqual(invoice.total_amount, Decimal('5100.00'))
+
+from django.test import Client
+from django.urls import reverse
+from django.contrib.auth.models import User
+
+class ViewTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(username='testuser', password='password')
+        self.client.login(username='testuser', password='password')
+        self.customer = Customer.objects.create(name="Test Client")
+
+    def test_calendar_view(self):
+        # Create an event and rental
+        today = date.today()
+        Event.objects.create(name="Test Event", customer=self.customer, date=today)
+        Rental.objects.create(customer=self.customer, rental_date=today, return_date=today)
+
+        response = self.client.get('/calendar/') # Assumption on URL
+        self.assertEqual(response.status_code, 200)
+
+        # Check context data
+        calendar_data = response.context['calendar']
+        found_event = False
+        found_rental = False
+
+        for week in calendar_data:
+            for day in week:
+                if day['date'] == today:
+                    if day['events']:
+                        found_event = True
+                    if day['rentals']:
+                        found_rental = True
+
+        self.assertTrue(found_event)
+        self.assertTrue(found_rental)
