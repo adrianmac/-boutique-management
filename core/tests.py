@@ -72,3 +72,36 @@ class ServiceTests(TestCase):
 
         invoice = create_invoice_for_event(event)
         self.assertEqual(invoice.total_amount, Decimal('5100.00'))
+
+from django.test import Client
+from django.contrib.auth.models import User
+from django.urls import reverse
+
+class SeamstressViewTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username='testuser', password='password')
+        self.client = Client()
+        self.client.force_login(self.user)
+
+        # Create 10 customers and 10 jobs
+        for i in range(10):
+            customer = Customer.objects.create(name=f"Customer {i}")
+            SeamstressJob.objects.create(
+                customer=customer,
+                due_date=date.today() + timedelta(days=i),
+                description=f"Job {i}"
+            )
+
+    def test_seamstress_list_queries(self):
+        url = reverse('seamstress_list')
+
+        # We expect 5 queries:
+        # 1. Session
+        # 2. User
+        # 3. Permissions (User)
+        # 4. Permissions (Group)
+        # 5. SeamstressJob list with Customer join
+        with self.assertNumQueries(5):
+            response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 200)
