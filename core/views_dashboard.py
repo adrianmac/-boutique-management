@@ -12,17 +12,17 @@ def dashboard(request):
 
     # Action Items
     actions = {
-        'rentals_start': Rental.objects.filter(rental_date=today, status='RESERVED'),
-        'rentals_return': Rental.objects.filter(return_date=today, status='PICKED_UP'),
-        'jobs_due': SeamstressJob.objects.filter(due_date=today).exclude(status='COMPLETED'),
+        'rentals_start': Rental.objects.select_related('customer').filter(rental_date=today, status='RESERVED'),
+        'rentals_return': Rental.objects.select_related('customer').filter(return_date=today, status='PICKED_UP'),
+        'jobs_due': SeamstressJob.objects.select_related('customer').filter(due_date=today).exclude(status='COMPLETED'),
         'events_today': Event.objects.filter(date=today),
     }
 
     context = {
         'actions': actions,
         'recent_events': Event.objects.filter(date__gte=today).order_by('date')[:5],
-        'active_rentals': Rental.objects.filter(status__in=['RESERVED', 'PICKED_UP']).order_by('rental_date')[:5],
-        'pending_jobs': SeamstressJob.objects.filter(status__in=['PENDING', 'IN_PROGRESS']).order_by('due_date')[:5],
+        'active_rentals': Rental.objects.select_related('customer').filter(status__in=['RESERVED', 'PICKED_UP']).order_by('rental_date')[:5],
+        'pending_jobs': SeamstressJob.objects.select_related('customer').filter(status__in=['PENDING', 'IN_PROGRESS']).order_by('due_date')[:5],
         'overdue_invoices': Invoice.objects.filter(status='UNPAID', date_created__lt=today).count(),
     }
     return render(request, 'core/dashboard.html', context)
