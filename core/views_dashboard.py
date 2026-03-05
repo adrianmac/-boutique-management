@@ -18,14 +18,20 @@ def dashboard(request):
         'events_today': Event.objects.filter(date=today),
     }
 
+    # FIX: Use date_created__date (DateField lookup) so we compare dates not datetimes.
+    # This correctly captures invoices created on any past day, excluding today.
     context = {
         'actions': actions,
         'recent_events': Event.objects.filter(date__gte=today).order_by('date')[:5],
         'active_rentals': Rental.objects.filter(status__in=['RESERVED', 'PICKED_UP']).order_by('rental_date')[:5],
         'pending_jobs': SeamstressJob.objects.filter(status__in=['PENDING', 'IN_PROGRESS']).order_by('due_date')[:5],
-        'overdue_invoices': Invoice.objects.filter(status='UNPAID', date_created__lt=today).count(),
+        'overdue_invoices': Invoice.objects.filter(
+            status='UNPAID',
+            date_created__date__lt=today   # FIX: was date_created__lt=today (wrong type comparison)
+        ).count(),
     }
     return render(request, 'core/dashboard.html', context)
+
 
 @login_required
 def calendar_view(request):
@@ -48,16 +54,12 @@ def calendar_view(request):
         for day in week:
             day_events = events.filter(date=day)
             day_rentals = rentals.filter(rental_date=day)
-
-            is_today = (day == today)
-            is_current_month = (day.month == month)
-
             week_data.append({
                 'date': day,
                 'events': day_events,
                 'rentals': day_rentals,
-                'is_today': is_today,
-                'is_current_month': is_current_month
+                'is_today': (day == today),
+                'is_current_month': (day.month == month)
             })
         calendar_data.append(week_data)
 
@@ -70,24 +72,24 @@ def calendar_view(request):
         'calendar': calendar_data,
         'current_month': date(year, month, 1),
         'prev_year': prev_year, 'prev_month': prev_month,
-        'next_year': next_year, 'next_month': next_month
+        'next_year': next_year, 'next_month': next_month,
     })
+
 
 @login_required
 def reports_view(request):
     today = date.today()
 
-    # 1. Monthly Revenue
     revenue_labels = []
     revenue_data = []
 
     for i in range(5, -1, -1):
         if today.month - i < 1:
-             m = 12 + (today.month - i)
-             y = today.year - 1
+            m = 12 + (today.month - i)
+            y = today.year - 1
         else:
-             m = today.month - i
-             y = today.year
+            m = today.month - i
+            y = today.year
         month_start = date(y, m, 1)
         next_month = (month_start + timedelta(days=32)).replace(day=1)
 
@@ -100,7 +102,6 @@ def reports_view(request):
         revenue_labels.append(month_start.strftime("%B"))
         revenue_data.append(float(total))
 
-    # 2. Top Items
     top_items = RentalItem.objects.values('inventory_item__name').annotate(
         total_qty=Sum('quantity')
     ).order_by('-total_qty')[:5]
@@ -108,7 +109,6 @@ def reports_view(request):
     item_labels = [x['inventory_item__name'] for x in top_items]
     item_data = [x['total_qty'] for x in top_items]
 
-    # 3. Revenue by Event Type
     event_revenue = Invoice.objects.filter(
         event__isnull=False,
         status='PAID'
@@ -117,7 +117,6 @@ def reports_view(request):
     ).order_by('-total')
 
     event_type_display = dict(Event.EVENT_TYPE_CHOICES)
-
     event_type_labels = [event_type_display.get(x['event__event_type'], x['event__event_type']) for x in event_revenue]
     event_type_data = [float(x['total']) for x in event_revenue]
 

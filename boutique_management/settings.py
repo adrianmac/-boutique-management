@@ -6,20 +6,35 @@ from pathlib import Path
 import os
 import dj_database_url
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# SECURITY: SECRET_KEY must be set via environment variable in production.
+# Generate one with: python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+SECRET_KEY = os.environ.get("SECRET_KEY")
+if not SECRET_KEY:
+    import sys
+    if 'runserver' in sys.argv or 'gunicorn' in str(sys.argv):
+        # Allow a dev fallback ONLY when DEBUG is explicitly true
+        if os.environ.get("DEBUG", "false").lower() == "true":
+            SECRET_KEY = "dev-only-insecure-key-change-in-production"
+        else:
+            raise RuntimeError(
+                "SECRET_KEY environment variable is not set. "
+                "Set it before running in production."
+            )
+    else:
+        # During management commands (migrate, collectstatic, etc.) use a temp key
+        SECRET_KEY = "temp-key-for-management-commands-only"
 
-# Quick-start development settings - unsuitable for production
-SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-vlck4sch*ar4-2uq^fmbtrmai3(pu_s97-_mw6-)ii(tofy_5j")
+# SECURITY: DEBUG defaults to False. Set DEBUG=true in your environment only for local dev.
+DEBUG = os.environ.get("DEBUG", "false").lower() == "true"
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get("DEBUG", "False").lower() == "true"
-
-ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "*").split(",")
-
-
-# Application definition
+# SECURITY: ALLOWED_HOSTS should be explicitly set in production, not wildcarded.
+_allowed_hosts_env = os.environ.get("ALLOWED_HOSTS", "")
+if _allowed_hosts_env:
+    ALLOWED_HOSTS = [h.strip() for h in _allowed_hosts_env.split(",") if h.strip()]
+else:
+    ALLOWED_HOSTS = ["localhost", "127.0.0.1"] if DEBUG else []
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -62,10 +77,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "boutique_management.wsgi.application"
 
-
-# Database
-# Use dj-database-url to parse DATABASE_URL environment variable
-# Default to SQLite for local development
 DATABASES = {
     "default": dj_database_url.config(
         default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
@@ -73,44 +84,34 @@ DATABASES = {
     )
 }
 
-
-# Password validation
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
-    },
+    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
-
-# Internationalization
 LANGUAGE_CODE = "en-us"
-
 TIME_ZONE = "UTC"
-
 USE_I18N = True
-
 USE_TZ = True
 
-
-# Static files (CSS, JavaScript, Images)
 STATIC_URL = "static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
-# Login
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/login/'
 LOGIN_URL = '/login/'
 
-# Email (Console for Dev)
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# Security headers (active in production when DEBUG=False)
+if not DEBUG:
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS = 'DENY'
+    SECURE_SSL_REDIRECT = os.environ.get("SECURE_SSL_REDIRECT", "false").lower() == "true"
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True

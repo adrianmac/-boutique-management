@@ -1,62 +1,166 @@
 {% extends 'base.html' %}
+{% block title %}{{ event.name }} — Boutique Manager{% endblock %}
 {% block content %}
-<div class="row">
-    <div class="col-md-8">
-        <div class="card mb-4">
-            <div class="card-header bg-info text-dark">Event Details</div>
-            <div class="card-body">
-                <h3>{{ event.name }}</h3>
-                <p class="text-muted">{{ event.date|date:"l, F d, Y" }}</p>
-                <div class="row">
-                    <div class="col-md-6">
-                        <strong>Customer:</strong> <a href="{% url 'customer_detail' pk=event.customer.pk %}">{{ event.customer.name }}</a><br>
-                        <strong>Location:</strong> {{ event.location }}
-                    </div>
-                    <div class="col-md-6">
-                        <strong>Guests:</strong> {{ event.guest_count }}<br>
-                        <strong>Description:</strong> {{ event.description }}
-                    </div>
-                </div>
-            </div>
-        </div>
 
-        <div class="card mb-4">
-            <div class="card-header">Decor Rentals</div>
-            <div class="card-body">
-                {% for rental in event.rentals.all %}
-                <h6>Rental #{{ rental.id }}</h6>
-                <table class="table table-sm">
-                    <thead>
-                        <tr><th>Item</th><th>Qty</th></tr>
-                    </thead>
-                    <tbody>
-                        {% for item in rental.items.all %}
-                        <tr>
-                            <td>{{ item.inventory_item.name }}</td>
-                            <td>{{ item.quantity }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-                {% empty %}
-                <p class="text-muted">No decor reserved for this event.</p>
+<div class="page-header">
+  <div>
+    <h2 class="italic">{{ event.name }}</h2>
+    <p class="text-muted" style="font-size:13px; margin-top:4px;">
+      <i class="bi bi-calendar3 me-1"></i>{{ event.date|date:"l, F j, Y" }}
+      &nbsp;·&nbsp;
+      <span class="badge" style="background:rgba(92,50,96,0.1); color:var(--plum-mid);">{{ event.get_event_type_display }}</span>
+    </p>
+  </div>
+  <a href="{% url 'event_list' %}" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left me-1"></i>All Events
+  </a>
+</div>
+
+<div class="row g-4">
+  <!-- Left: Main Info -->
+  <div class="col-md-8">
+
+    <!-- Event Details -->
+    <div class="card mb-4">
+      <div class="card-header"><i class="bi bi-info-circle me-2"></i>Event Details</div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-sm-6">
+            <p class="text-muted mb-1" style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.06em;">Customer</p>
+            <a href="{% url 'customer_detail' pk=event.customer.pk %}" style="font-size:15px; font-weight:500;">{{ event.customer.name }}</a>
+          </div>
+          <div class="col-sm-6">
+            <p class="text-muted mb-1" style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.06em;">Location</p>
+            <p style="font-size:15px;">{{ event.location|default:"TBD" }}</p>
+          </div>
+          <div class="col-sm-6">
+            <p class="text-muted mb-1" style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.06em;">Guest Count</p>
+            <p style="font-size:15px;">{{ event.guest_count }}</p>
+          </div>
+          <div class="col-sm-6">
+            <p class="text-muted mb-1" style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.06em;">Event Type</p>
+            <p style="font-size:15px;">{{ event.get_event_type_display }}</p>
+          </div>
+          {% if event.description %}
+          <div class="col-12">
+            <p class="text-muted mb-1" style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.06em;">Description</p>
+            <p style="font-size:14px; color:var(--muted);">{{ event.description }}</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Decor Rentals -->
+    <div class="card mb-4">
+      <div class="card-header"><i class="bi bi-stars me-2"></i>Decor &amp; Rentals</div>
+      <div class="card-body">
+        {% for rental in event.rentals.all %}
+          <h6 style="color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.06em; margin-bottom:.5rem;">Rental #{{ rental.id }}</h6>
+          <div class="table-responsive mb-3">
+            <table class="table table-sm mb-0">
+              <thead>
+                <tr><th>Item</th><th>Qty</th><th>Unit Price</th><th>Subtotal</th></tr>
+              </thead>
+              <tbody>
+                {% for item in rental.items.all %}
+                <tr>
+                  <td>{{ item.inventory_item.name }}</td>
+                  <td>{{ item.quantity }}</td>
+                  <td>${{ item.price_at_booking }}</td>
+                  <td>${{ item.quantity|stringformat:"s" }}<!-- computed below --></td>
+                </tr>
                 {% endfor %}
-            </div>
-        </div>
+              </tbody>
+            </table>
+          </div>
+        {% empty %}
+          <p class="text-muted" style="font-size:13px;">No decor reserved for this event.</p>
+        {% endfor %}
+      </div>
     </div>
-    <div class="col-md-4">
-        <div class="card mb-3">
-            <div class="card-header">Financials</div>
-            <div class="card-body">
-                <p><strong>Base Cost:</strong> ${{ event.base_cost }}</p>
-                <p><strong>Guest Cost:</strong> ${{ event.cost_per_guest }} x {{ event.guest_count }}</p>
-                {% if event.invoice %}
-                <div class="d-grid mt-3">
-                    <a href="{% url 'invoice_detail' pk=event.invoice.pk %}" class="btn btn-success">View Invoice</a>
-                </div>
-                {% endif %}
-            </div>
-        </div>
+
+    <!-- Additional Services -->
+    <div class="card mb-4">
+      <div class="card-header"><i class="bi bi-music-note-list me-2"></i>Additional Services</div>
+      <ul class="list-group list-group-flush">
+        {% for es in event.services.all %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          <div>
+            <strong>{{ es.service.name }}</strong>
+            {% if es.notes %}<span class="text-muted ms-2" style="font-size:12px;">{{ es.notes }}</span>{% endif %}
+          </div>
+          <span style="font-weight:600; color:var(--plum);">${{ es.price }}</span>
+        </li>
+        {% empty %}
+        <li class="list-group-item text-muted" style="font-size:13px;">No additional services.</li>
+        {% endfor %}
+      </ul>
     </div>
+
+  </div>
+
+  <!-- Right: Financial Summary -->
+  <div class="col-md-4">
+
+    <div class="card mb-3">
+      <div class="card-header"><i class="bi bi-wallet2 me-2"></i>Financials</div>
+      <div class="card-body">
+        <div class="d-flex justify-content-between py-2 border-bottom">
+          <span class="text-muted" style="font-size:13px;">Event Budget</span>
+          <strong>${{ event.budget }}</strong>
+        </div>
+        <div class="d-flex justify-content-between py-2 border-bottom">
+          <span class="text-muted" style="font-size:13px;">Deposit</span>
+          <span>${{ event.deposit_amount }}</span>
+        </div>
+        <div class="d-flex justify-content-between py-2 border-bottom">
+          <span class="text-muted" style="font-size:13px;">Deposit Returned</span>
+          <span>
+            {% if event.deposit_returned %}
+              <i class="bi bi-check-circle-fill text-success"></i> Yes
+            {% else %}
+              <i class="bi bi-x-circle text-muted"></i> No
+            {% endif %}
+          </span>
+        </div>
+        {% if event.invoice %}
+        <div class="d-flex justify-content-between py-2 border-bottom">
+          <span class="text-muted" style="font-size:13px;">Invoice Total</span>
+          <strong style="color:var(--plum);">${{ event.invoice.total_amount }}</strong>
+        </div>
+        <div class="d-flex justify-content-between py-2">
+          <span class="text-muted" style="font-size:13px;">Invoice Status</span>
+          <span class="badge status-{{ event.invoice.status|lower }}">{{ event.invoice.get_status_display }}</span>
+        </div>
+        {% endif %}
+      </div>
+      {% if event.invoice %}
+      <div class="card-footer">
+        <a href="{% url 'invoice_detail' pk=event.invoice.pk %}" class="btn btn-success w-100">
+          <i class="bi bi-receipt me-1"></i>View Invoice
+        </a>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Customer Quick Info -->
+    <div class="card">
+      <div class="card-header"><i class="bi bi-person me-2"></i>Customer</div>
+      <div class="card-body">
+        <p style="font-size:15px; font-weight:500; margin-bottom:.5rem;">{{ event.customer.name }}</p>
+        <p class="text-muted" style="font-size:13px; margin-bottom:.25rem;">
+          <i class="bi bi-telephone me-1"></i>{{ event.customer.phone|default:"—" }}
+        </p>
+        <p class="text-muted" style="font-size:13px;">
+          <i class="bi bi-envelope me-1"></i>{{ event.customer.email|default:"—" }}
+        </p>
+        <a href="{% url 'customer_detail' pk=event.customer.pk %}" class="btn btn-sm btn-outline-primary mt-2 w-100">
+          View Profile
+        </a>
+      </div>
+    </div>
+
+  </div>
 </div>
 {% endblock %}

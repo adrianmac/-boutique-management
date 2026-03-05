@@ -1,92 +1,188 @@
 {% extends 'base.html' %}
+{% block title %}Invoice #{{ invoice.id }} — Boutique Manager{% endblock %}
 {% block content %}
-<div class="row">
-    <div class="col-md-8">
-        <div class="card mb-4">
-            <div class="card-header d-flex justify-content-between">
-                <span>Invoice #{{ invoice.id }}</span>
-                <span class="badge {% if invoice.status == 'PAID' %}bg-success{% else %}bg-danger{% endif %}">{{ invoice.get_status_display }}</span>
-            </div>
-            <div class="card-body">
-                <h5>Billed To: {{ invoice.customer.name }}</h5>
-                <p class="text-muted">{{ invoice.date_created|date:"F d, Y" }}</p>
 
-                <table class="table mt-4">
-                    <thead>
-                        <tr><th>Description</th><th>Amount</th></tr>
-                    </thead>
-                    <tbody>
-                        {% if invoice.event %}
-                        <tr>
-                            <td>Event: {{ invoice.event.name }} (Base Cost)</td>
-                            <td>${{ invoice.event.base_cost }}</td>
-                        </tr>
-                        <tr>
-                            <td>Guest Fees ({{ invoice.event.guest_count }} guests)</td>
-                            <td>$<script>document.write({{ invoice.event.guest_count }} * {{ invoice.event.cost_per_guest }})</script></td>
-                        </tr>
-                        {% for rental in invoice.event.rentals.all %}
-                            {% for item in rental.items.all %}
-                            <tr>
-                                <td>{{ item.inventory_item.name }} (x{{ item.quantity }})</td>
-                                <td>$<script>document.write(({{ item.quantity }} * {{ item.price_at_booking }}).toFixed(2))</script></td>
-                            </tr>
-                            {% endfor %}
-                        {% endfor %}
-                        {% elif invoice.rental %}
-                            {% for item in invoice.rental.items.all %}
-                            <tr>
-                                <td>{{ item.inventory_item.name }} (x{{ item.quantity }})</td>
-                                <td>$<script>document.write(({{ item.quantity }} * {{ item.price_at_booking }}).toFixed(2))</script></td>
-                            </tr>
-                            {% endfor %}
-                            {% for job in invoice.rental.alterations.all %}
-                            <tr>
-                                <td>Seamstress Service: {{ job.description }}</td>
-                                <td>${{ job.price }}</td>
-                            </tr>
-                            {% endfor %}
-                        {% endif %}
-                        <tr class="table-active fw-bold">
-                            <td>Total</td>
-                            <td>${{ invoice.total_amount }}</td>
-                        </tr>
-                    </tbody>
-                </table>
-                <a href="{% url 'invoice_print' pk=invoice.pk %}" target="_blank" class="btn btn-outline-secondary mt-3"><i class="bi bi-printer"></i> Print Invoice</a>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-header">Payment History</div>
-            <div class="card-body">
-                <ul class="list-group">
-                    {% for payment in invoice.payments.all %}
-                    <li class="list-group-item d-flex justify-content-between">
-                        <span>{{ payment.date }} - {{ payment.method }}</span>
-                        <span class="fw-bold">${{ payment.amount }}</span>
-                    </li>
-                    {% empty %}
-                    <li class="list-group-item text-muted">No payments recorded.</li>
-                    {% endfor %}
-                </ul>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-md-4">
-        {% if invoice.status != 'PAID' %}
-        <div class="card mb-3">
-            <div class="card-header bg-success text-white">Record Payment</div>
-            <div class="card-body">
-                <form method="post">
-                    {% csrf_token %}
-                    {{ form.as_p }}
-                    <button type="submit" class="btn btn-success w-100">Add Payment</button>
-                </form>
-            </div>
-        </div>
-        {% endif %}
-    </div>
+<div class="page-header">
+  <div>
+    <h2 class="italic">Invoice #{{ invoice.id }}</h2>
+    <p class="text-muted" style="font-size:13px; margin-top:4px;">
+      Issued {{ invoice.date_created|date:"F j, Y" }}
+    </p>
+  </div>
+  <div class="d-flex gap-2 align-items-center">
+    <span class="badge fs-6 status-{{ invoice.status|lower }}">{{ invoice.get_status_display }}</span>
+    <a href="{% url 'invoice_print' pk=invoice.pk %}" target="_blank" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-printer me-1"></i>Print
+    </a>
+  </div>
 </div>
+
+<div class="row g-4">
+  <!-- Invoice Detail -->
+  <div class="col-md-8">
+    <div class="card mb-4">
+      <div class="card-header"><i class="bi bi-receipt me-2"></i>Billed To: {{ invoice.customer.name }}</div>
+      <div class="card-body p-0">
+        <table class="table mb-0">
+          <thead>
+            <tr>
+              <th style="width:60%">Description</th>
+              <th class="text-end">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+
+            {% if invoice.event %}
+              <!-- Event invoice line items -->
+              <tr>
+                <td>
+                  <strong>Event:</strong> {{ invoice.event.name }}
+                  <div class="text-muted" style="font-size:12px;">Budget / base cost</div>
+                </td>
+                <td class="text-end">${{ invoice.event.budget }}</td>
+              </tr>
+
+              <!-- Decor rentals linked to this event -->
+              {% for rental in invoice.event.rentals.all %}
+                {% for item in rental.items.all %}
+                <tr>
+                  <td>
+                    {{ item.inventory_item.name }} &times; {{ item.quantity }}
+                    <div class="text-muted" style="font-size:12px;">Decor rental</div>
+                  </td>
+                  <td class="text-end">${{ item.price_at_booking }}</td>
+                </tr>
+                {% endfor %}
+              {% endfor %}
+
+              <!-- Services on this event -->
+              {% for es in invoice.event.services.all %}
+              <tr>
+                <td>
+                  Service: {{ es.service.name }}
+                  {% if es.notes %}<div class="text-muted" style="font-size:12px;">{{ es.notes }}</div>{% endif %}
+                </td>
+                <td class="text-end">${{ es.price }}</td>
+              </tr>
+              {% endfor %}
+
+            {% elif invoice.rental %}
+              <!-- Standalone rental invoice -->
+              {% for item in invoice.rental.items.all %}
+              <tr>
+                <td>
+                  {{ item.inventory_item.name }} &times; {{ item.quantity }}
+                  <div class="text-muted" style="font-size:12px;">{{ invoice.rental.rental_date }} — {{ invoice.rental.return_date }}</div>
+                </td>
+                <td class="text-end">${{ item.price_at_booking }}</td>
+              </tr>
+              {% endfor %}
+
+              {% for job in invoice.rental.alterations.all %}
+              <tr>
+                <td>
+                  Seamstress: {{ job.description|truncatechars:60 }}
+                  <div class="text-muted" style="font-size:12px;">Alteration service</div>
+                </td>
+                <td class="text-end">${{ job.price }}</td>
+              </tr>
+              {% endfor %}
+            {% endif %}
+
+          </tbody>
+          <tfoot>
+            <tr style="background:var(--champagne);">
+              <td class="fw-bold" style="font-size:15px; font-family:var(--font-display);">Total</td>
+              <td class="text-end fw-bold" style="font-size:15px; color:var(--plum);">${{ invoice.total_amount }}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+    <!-- Payments -->
+    <div class="card">
+      <div class="card-header"><i class="bi bi-cash-stack me-2"></i>Payment History</div>
+      <div class="card-body p-0">
+        {% if invoice.payments.all %}
+        <table class="table mb-0">
+          <thead>
+            <tr><th>Date</th><th>Method</th><th class="text-end">Amount</th></tr>
+          </thead>
+          <tbody>
+            {% for payment in invoice.payments.all %}
+            <tr>
+              <td>{{ payment.date|date:"M j, Y" }}</td>
+              <td>
+                <span class="badge" style="background:var(--champagne); color:var(--plum);">{{ payment.method }}</span>
+              </td>
+              <td class="text-end" style="color:var(--success); font-weight:600;">${{ payment.amount }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <div class="card-body text-muted" style="font-size:13px;">No payments recorded yet.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Sidebar: Record Payment -->
+  <div class="col-md-4">
+    {% if invoice.status != 'PAID' %}
+    <div class="card mb-3">
+      <div class="card-header" style="background: linear-gradient(135deg, var(--success) 0%, #3a8c64 100%) !important;">
+        <i class="bi bi-plus-circle me-2"></i>Record Payment
+      </div>
+      <div class="card-body">
+        <form method="post">
+          {% csrf_token %}
+          {% for field in form %}
+          <div class="mb-3">
+            <label class="form-label">{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}
+              <div class="text-danger" style="font-size:12px;">{{ field.errors|join:", " }}</div>
+            {% endif %}
+          </div>
+          {% endfor %}
+          <button type="submit" class="btn btn-success w-100">
+            <i class="bi bi-check-lg me-1"></i>Add Payment
+          </button>
+        </form>
+      </div>
+    </div>
+    {% else %}
+    <div class="card" style="border-color:var(--success);">
+      <div class="card-body text-center py-4">
+        <i class="bi bi-check-circle-fill" style="font-size:2.5rem; color:var(--success);"></i>
+        <p class="mt-2 mb-0" style="color:var(--success); font-weight:600;">Fully Paid</p>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Summary Box -->
+    <div class="card">
+      <div class="card-header"><i class="bi bi-calculator me-2"></i>Balance</div>
+      <div class="card-body">
+        <div class="d-flex justify-content-between py-2 border-bottom">
+          <span class="text-muted" style="font-size:13px;">Invoice Total</span>
+          <strong>${{ invoice.total_amount }}</strong>
+        </div>
+        <div class="d-flex justify-content-between py-2 border-bottom">
+          <span class="text-muted" style="font-size:13px;">Paid</span>
+          <span style="color:var(--success);">
+            ${% with paid=invoice.payments.all %}{% for p in paid %}{{ p.amount }}{% endfor %}{% endwith %}
+          </span>
+        </div>
+        <div class="d-flex justify-content-between py-2">
+          <span style="font-weight:600; font-size:14px;">Status</span>
+          <span class="badge status-{{ invoice.status|lower }}">{{ invoice.get_status_display }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 {% endblock %}

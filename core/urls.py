@@ -27,6 +27,7 @@ urlpatterns = [
     path('rentals/wizard/step3/', views_rental.rental_wizard_step3, name='rental_wizard_step3'),
     path('rentals/wizard/confirm/', views_rental.rental_wizard_confirm, name='rental_wizard_confirm'),
     path('rentals/<int:pk>/', views_rental.rental_detail, name='rental_detail'),
+    path('rentals/<int:pk>/status/', views_rental.rental_update_status, name='rental_update_status'),  # NEW
     path('rentals/<int:pk>/contract/', views_rental.contract_generate, name='contract_generate'),
 
     # Seamstress

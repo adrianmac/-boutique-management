@@ -20,6 +20,21 @@ def rental_detail(request, pk):
     return render(request, 'core/rental_detail.html', {'rental': rental})
 
 @login_required
+def rental_update_status(request, pk):
+    """Update the status of a rental (Picked Up / Returned / Cancelled)."""
+    rental = get_object_or_404(Rental, pk=pk)
+    if request.method == 'POST':
+        new_status = request.POST.get('status')
+        valid_statuses = dict(Rental.STATUS_CHOICES)
+        if new_status in valid_statuses:
+            rental.status = new_status
+            rental.save()
+            messages.success(request, f"Rental #{rental.id} marked as {valid_statuses[new_status]}.")
+        else:
+            messages.error(request, "Invalid status value.")
+    return redirect('rental_detail', pk=pk)
+
+@login_required
 def rental_wizard_step1(request):
     """Step 1: Customer and Dates"""
     if request.method == 'POST':
@@ -34,7 +49,6 @@ def rental_wizard_step1(request):
             return redirect('rental_wizard_step2')
     else:
         form = RentalStep1Form()
-
     return render(request, 'core/rental_wizard_step1.html', {'form': form})
 
 @login_required
@@ -49,14 +63,12 @@ def rental_wizard_step2(request):
 
     items = InventoryItem.objects.all()
     available_items = []
-
     for item in items:
         avail = get_available_quantity(item, start_date, end_date)
         if avail > 0:
             available_items.append({'item': item, 'avail': avail})
 
     if request.method == 'POST':
-        # Process selected items
         selected_items = {}
         for key, value in request.POST.items():
             if key.startswith('qty_') and value and int(value) > 0:
@@ -108,7 +120,6 @@ def rental_wizard_confirm(request):
 
     customer = Customer.objects.get(id=data['customer_id'])
 
-    # Prepare display data
     display_items = []
     total_est = Decimal('0.00')
 
@@ -120,13 +131,12 @@ def rental_wizard_confirm(request):
 
     seamstress_price = Decimal('0.00')
     if seamstress_data:
-        seamstress_price = Decimal(seamstress_data['price'])
+        seamstress_price = Decimal(str(seamstress_data['price']))
         total_est += seamstress_price
 
-    deposit = Decimal(data.get('deposit', 0))
+    deposit = Decimal(str(data.get('deposit', 0)))
 
     if request.method == 'POST':
-        # SAVE EVERYTHING
         rental = Rental.objects.create(
             customer=customer,
             rental_date=data['rental_date'],
@@ -154,11 +164,8 @@ def rental_wizard_confirm(request):
                 status='PENDING'
             )
 
-        # Generate Invoice (Total does NOT include deposit usually, or does it?
-        # Usually Invoice = Service Fees. Deposit is separate. But for simplicity, we invoice the TOTAL fees.)
         create_invoice_for_rental(rental)
 
-        # Clear session
         del request.session['rental_data']
         del request.session['rental_items']
         if 'seamstress_data' in request.session:
@@ -174,11 +181,10 @@ def rental_wizard_confirm(request):
         'items': display_items,
         'seamstress': seamstress_data,
         'total': total_est,
-        'deposit': deposit
+        'deposit': deposit,
     })
 
 @login_required
 def contract_generate(request, pk):
     rental = get_object_or_404(Rental, pk=pk)
-    # Simple HTML Contract
     return render(request, 'core/contract_template.html', {'rental': rental})

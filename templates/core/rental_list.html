@@ -1,42 +1,61 @@
 {% extends 'base.html' %}
+{% block title %}Rentals — Boutique Manager{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>Rentals</h2>
-    <a href="{% url 'rental_wizard_step1' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> New Booking</a>
+
+<div class="page-header">
+  <h2 class="italic">Rentals</h2>
+  <a href="{% url 'rental_wizard_step1' %}" class="btn btn-primary">
+    <i class="bi bi-plus-lg me-1"></i>New Booking
+  </a>
 </div>
 
 <div class="card">
-    <div class="table-responsive">
-        <table class="table table-hover mb-0">
-            <thead class="table-light">
-                <tr>
-                    <th>ID</th>
-                    <th>Customer</th>
-                    <th>Dates</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for rental in rentals %}
-                <tr>
-                    <td>#{{ rental.id }}</td>
-                    <td>{{ rental.customer.name }}</td>
-                    <td>{{ rental.rental_date|date:"M d" }} - {{ rental.return_date|date:"M d" }}</td>
-                    <td>
-                        <span class="badge {% if rental.status == 'RESERVED' %}bg-primary{% elif rental.status == 'RETURNED' %}bg-success{% else %}bg-secondary{% endif %}">
-                            {{ rental.get_status_display }}
-                        </span>
-                    </td>
-                    <td>
-                        <a href="{% url 'rental_detail' pk=rental.pk %}" class="btn btn-sm btn-outline-primary">View</a>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr><td colspan="5" class="text-center">No rentals found.</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Customer</th>
+          <th>Rental Date</th>
+          <th>Return Date</th>
+          <th>Items</th>
+          <th>Status</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for rental in rentals %}
+        <tr onclick="window.location='{% url 'rental_detail' pk=rental.pk %}'" style="cursor:pointer;">
+          <td style="color:var(--muted); font-size:12px; font-weight:600;">#{{ rental.id }}</td>
+          <td><strong>{{ rental.customer.name }}</strong></td>
+          <td>{{ rental.rental_date|date:"M j, Y" }}</td>
+          <td>{{ rental.return_date|date:"M j, Y" }}</td>
+          <td>
+            <span class="badge" style="background:var(--champagne); color:var(--plum);">
+              {{ rental.items.count }} item{{ rental.items.count|pluralize }}
+            </span>
+          </td>
+          <td>
+            <span class="badge status-{{ rental.status|lower }}">
+              {{ rental.get_status_display }}
+            </span>
+          </td>
+          <td class="text-end">
+            <a href="{% url 'rental_detail' pk=rental.pk %}" class="btn btn-sm btn-outline-primary"
+               onclick="event.stopPropagation();">View</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" class="text-center py-5 text-muted">
+            <i class="bi bi-bag" style="font-size:2rem; display:block; margin-bottom:.5rem; opacity:.3;"></i>
+            No rentals found.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </div>
+
 {% endblock %}

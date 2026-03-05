@@ -1,133 +1,192 @@
 {% extends 'base.html' %}
+{% block title %}Dashboard — Boutique Manager{% endblock %}
 {% block content %}
-<div class="row mb-4">
-    <div class="col-md-12">
-        <h2 class="mb-3">Welcome to Boutique Manager</h2>
 
-        <!-- Action Items -->
-        <div class="card border-primary mb-4">
-            <div class="card-header bg-primary text-white"><i class="bi bi-check-circle"></i> Today's Action Items</div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-3">
-                        <h6 class="text-primary">Rentals to Prepare</h6>
-                        <ul class="list-unstyled">
-                            {% for r in actions.rentals_start %}
-                            <li><a href="{% url 'rental_detail' pk=r.pk %}" class="text-decoration-none">#{{ r.id }} - {{ r.customer.name }}</a></li>
-                            {% empty %}
-                            <li class="text-muted small">None</li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-                    <div class="col-md-3">
-                        <h6 class="text-danger">Returns Due</h6>
-                        <ul class="list-unstyled">
-                            {% for r in actions.rentals_return %}
-                            <li><a href="{% url 'rental_detail' pk=r.pk %}" class="text-decoration-none">#{{ r.id }} - {{ r.customer.name }}</a></li>
-                            {% empty %}
-                            <li class="text-muted small">None</li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-                    <div class="col-md-3">
-                        <h6 class="text-warning">Seamstress Jobs Due</h6>
-                        <ul class="list-unstyled">
-                            {% for j in actions.jobs_due %}
-                            <li><a href="{% url 'seamstress_detail' pk=j.pk %}" class="text-decoration-none">{{ j.customer.name }}</a></li>
-                            {% empty %}
-                            <li class="text-muted small">None</li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-                    <div class="col-md-3">
-                        <h6 class="text-info">Events Today</h6>
-                        <ul class="list-unstyled">
-                            {% for e in actions.events_today %}
-                            <li><a href="{% url 'event_detail' pk=e.pk %}" class="text-decoration-none">{{ e.name }}</a></li>
-                            {% empty %}
-                            <li class="text-muted small">None</li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="d-flex gap-3 flex-wrap">
-            <a href="{% url 'event_wizard_step1' %}" class="btn btn-lg btn-primary flex-grow-1 py-4"><i class="bi bi-calendar-event fs-2 d-block"></i> Plan Event</a>
-            <a href="{% url 'rental_wizard_step1' %}" class="btn btn-lg btn-info flex-grow-1 py-4 text-white"><i class="bi bi-bag-check fs-2 d-block"></i> New Rental</a>
-            <a href="{% url 'seamstress_create' %}" class="btn btn-lg btn-warning flex-grow-1 py-4 text-dark"><i class="bi bi-scissors fs-2 d-block"></i> Seamstress Job</a>
-        </div>
-    </div>
+<div class="page-header">
+  <div>
+    <h2 class="italic">Good day, {{ user.first_name|default:user.username }}</h2>
+    <p class="text-muted" style="font-size:13px; margin-top:4px;">{% now "l, F j, Y" %}</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{% url 'event_wizard_step1' %}" class="btn btn-primary">
+      <i class="bi bi-plus-lg me-1"></i>New Event
+    </a>
+    <a href="{% url 'rental_wizard_step1' %}" class="btn btn-outline-primary">
+      <i class="bi bi-plus-lg me-1"></i>New Rental
+    </a>
+  </div>
 </div>
 
-<div class="row">
-    <div class="col-md-6 mb-4">
-        <div class="card h-100">
-            <div class="card-header bg-primary text-white">Upcoming Events</div>
-            <ul class="list-group list-group-flush">
-                {% for event in recent_events %}
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    <div>
-                        <strong>{{ event.name }}</strong><br>
-                        <small class="text-muted">{{ event.date|date:"M d" }}</small>
-                    </div>
-                    <a href="{% url 'event_detail' pk=event.pk %}" class="btn btn-sm btn-light">View</a>
-                </li>
-                {% empty %}
-                <li class="list-group-item">No upcoming events.</li>
-                {% endfor %}
-            </ul>
-        </div>
-    </div>
-
-    <div class="col-md-6 mb-4">
-        <div class="card h-100">
-            <div class="card-header bg-info text-white">Active Rentals (Pickups/Returns)</div>
-            <ul class="list-group list-group-flush">
-                {% for rental in active_rentals %}
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    <div>
-                        <strong>{{ rental.customer.name }}</strong><br>
-                        <small class="text-muted">Return: {{ rental.return_date|date:"M d" }}</small>
-                    </div>
-                    <span class="badge bg-secondary">{{ rental.status }}</span>
-                </li>
-                {% empty %}
-                <li class="list-group-item">No active rentals.</li>
-                {% endfor %}
-            </ul>
-        </div>
-    </div>
+<!-- Quick Action Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <a href="{% url 'event_wizard_step1' %}" class="action-btn action-btn-event w-100">
+      <i class="bi bi-calendar-heart"></i>
+      Plan an Event
+    </a>
+  </div>
+  <div class="col-md-4">
+    <a href="{% url 'rental_wizard_step1' %}" class="action-btn action-btn-rental w-100">
+      <i class="bi bi-bag-check"></i>
+      New Rental
+    </a>
+  </div>
+  <div class="col-md-4">
+    <a href="{% url 'seamstress_create' %}" class="action-btn action-btn-seam w-100">
+      <i class="bi bi-scissors"></i>
+      Seamstress Job
+    </a>
+  </div>
 </div>
 
-<div class="row">
-    <div class="col-md-6 mb-4">
-        <div class="card h-100">
-            <div class="card-header bg-warning text-dark">Pending Alterations</div>
-            <ul class="list-group list-group-flush">
-                {% for job in pending_jobs %}
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    <div>
-                        <strong>{{ job.customer.name }}</strong><br>
-                        <small class="text-muted">Due: {{ job.due_date|date:"M d" }}</small>
-                    </div>
-                    <span class="badge bg-warning text-dark">{{ job.status }}</span>
-                </li>
-                {% empty %}
-                <li class="list-group-item">No pending jobs.</li>
-                {% endfor %}
-            </ul>
-        </div>
+<!-- Today's Actions Panel -->
+{% with has_actions=actions.rentals_start|length|add:actions.rentals_return|length|add:actions.jobs_due|length|add:actions.events_today|length %}
+<div class="card mb-4" style="border-left: 4px solid var(--gold);">
+  <div class="card-header" style="background: linear-gradient(135deg, #3d1f3f 0%, #5c3260 100%);">
+    <i class="bi bi-sun me-2" style="color: var(--gold);"></i>Today's Action Items
+    {% if has_actions %}
+    <span class="badge ms-2" style="background: var(--gold); color: var(--plum);">{{ has_actions }}</span>
+    {% endif %}
+  </div>
+  <div class="card-body">
+    <div class="row g-4">
+      <div class="col-md-3">
+        <p class="text-muted mb-2" style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.06em;">
+          <i class="bi bi-box-arrow-up-right me-1" style="color:var(--info)"></i>Rentals to Prepare
+        </p>
+        {% for r in actions.rentals_start %}
+          <a href="{% url 'rental_detail' pk=r.pk %}" class="d-block text-decoration-none mb-1 p-2 rounded" style="background:rgba(44,95,122,0.07); font-size:13px; color:var(--info);">
+            <strong>#{{ r.id }}</strong> — {{ r.customer.name }}
+          </a>
+        {% empty %}
+          <span class="text-muted" style="font-size:12px;">None today ✓</span>
+        {% endfor %}
+      </div>
+
+      <div class="col-md-3">
+        <p class="text-muted mb-2" style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.06em;">
+          <i class="bi bi-box-arrow-in-left me-1" style="color:var(--danger)"></i>Returns Due
+        </p>
+        {% for r in actions.rentals_return %}
+          <a href="{% url 'rental_detail' pk=r.pk %}" class="d-block text-decoration-none mb-1 p-2 rounded" style="background:rgba(139,38,53,0.07); font-size:13px; color:var(--danger);">
+            <strong>#{{ r.id }}</strong> — {{ r.customer.name }}
+          </a>
+        {% empty %}
+          <span class="text-muted" style="font-size:12px;">None today ✓</span>
+        {% endfor %}
+      </div>
+
+      <div class="col-md-3">
+        <p class="text-muted mb-2" style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.06em;">
+          <i class="bi bi-scissors me-1" style="color:var(--gold)"></i>Alterations Due
+        </p>
+        {% for j in actions.jobs_due %}
+          <a href="{% url 'seamstress_detail' pk=j.pk %}" class="d-block text-decoration-none mb-1 p-2 rounded" style="background:rgba(184,146,74,0.1); font-size:13px; color:var(--warning-col);">
+            {{ j.customer.name }}
+            <span class="badge ms-1" style="background:rgba(184,146,74,0.2); color:var(--warning-col); font-size:10px;">{{ j.get_status_display }}</span>
+          </a>
+        {% empty %}
+          <span class="text-muted" style="font-size:12px;">None today ✓</span>
+        {% endfor %}
+      </div>
+
+      <div class="col-md-3">
+        <p class="text-muted mb-2" style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.06em;">
+          <i class="bi bi-calendar-star me-1" style="color:var(--plum-mid)"></i>Events Today
+        </p>
+        {% for e in actions.events_today %}
+          <a href="{% url 'event_detail' pk=e.pk %}" class="d-block text-decoration-none mb-1 p-2 rounded" style="background:rgba(92,50,96,0.08); font-size:13px; color:var(--plum-mid);">
+            {{ e.name }}
+          </a>
+        {% empty %}
+          <span class="text-muted" style="font-size:12px;">None today ✓</span>
+        {% endfor %}
+      </div>
     </div>
-    <div class="col-md-6 mb-4">
-        <div class="card h-100 bg-light border-danger">
-            <div class="card-body text-center d-flex flex-column justify-content-center">
-                <h1 class="display-1 text-danger">{{ overdue_invoices }}</h1>
-                <p class="lead text-danger">Unpaid Invoices Overdue</p>
-                <a href="{% url 'invoice_list' %}" class="btn btn-outline-danger">Manage Invoices</a>
-            </div>
-        </div>
-    </div>
+  </div>
 </div>
+{% endwith %}
+
+<!-- Lower panels -->
+<div class="row g-4">
+  <!-- Upcoming Events -->
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-header">
+        <i class="bi bi-calendar-event me-2"></i>Upcoming Events
+      </div>
+      <div class="list-group list-group-flush">
+        {% for event in recent_events %}
+        <a href="{% url 'event_detail' pk=event.pk %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-start text-decoration-none">
+          <div>
+            <strong style="font-size:14px;">{{ event.name }}</strong>
+            <div class="text-muted" style="font-size:12px;">{{ event.customer.name }}</div>
+          </div>
+          <span style="font-size:12px; color:var(--gold); font-weight:600; white-space:nowrap; margin-left:1rem;">{{ event.date|date:"M d" }}</span>
+        </a>
+        {% empty %}
+        <div class="list-group-item text-muted" style="font-size:13px;">No upcoming events.</div>
+        {% endfor %}
+      </div>
+      <div class="card-footer text-end">
+        <a href="{% url 'event_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Active Rentals -->
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-header" style="background: linear-gradient(135deg, var(--info) 0%, #3a7a9c 100%) !important;">
+        <i class="bi bi-bag me-2"></i>Active Rentals
+      </div>
+      <div class="list-group list-group-flush">
+        {% for rental in active_rentals %}
+        <a href="{% url 'rental_detail' pk=rental.pk %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-start text-decoration-none">
+          <div>
+            <strong style="font-size:14px;">{{ rental.customer.name }}</strong>
+            <div class="text-muted" style="font-size:12px;">Return: {{ rental.return_date|date:"M d" }}</div>
+          </div>
+          <span class="badge status-{{ rental.status|lower }} ms-2">{{ rental.get_status_display }}</span>
+        </a>
+        {% empty %}
+        <div class="list-group-item text-muted" style="font-size:13px;">No active rentals.</div>
+        {% endfor %}
+      </div>
+      <div class="card-footer text-end">
+        <a href="{% url 'rental_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right column: Pending Jobs + Overdue -->
+  <div class="col-md-4 d-flex flex-column gap-4">
+    <div class="card flex-grow-1">
+      <div class="card-header" style="background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%) !important; color: var(--plum) !important;">
+        <i class="bi bi-scissors me-2"></i>Pending Alterations
+      </div>
+      <div class="list-group list-group-flush">
+        {% for job in pending_jobs %}
+        <a href="{% url 'seamstress_detail' pk=job.pk %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-start text-decoration-none">
+          <div>
+            <strong style="font-size:14px;">{{ job.customer.name }}</strong>
+            <div class="text-muted" style="font-size:12px;">Due: {{ job.due_date|date:"M d" }}</div>
+          </div>
+          <span class="badge status-{{ job.status|lower }} ms-2">{{ job.get_status_display }}</span>
+        </a>
+        {% empty %}
+        <div class="list-group-item text-muted" style="font-size:13px;">No pending jobs.</div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="stat-card text-center">
+      <i class="bi bi-exclamation-circle stat-icon" style="color: var(--danger); opacity: 0.2;"></i>
+      <div class="stat-value" style="color: var(--danger);">{{ overdue_invoices }}</div>
+      <div class="stat-label">Unpaid Invoices</div>
+      <a href="{% url 'invoice_list' %}" class="btn btn-sm btn-outline-danger mt-3">Manage →</a>
+    </div>
+  </div>
+</div>
+
 {% endblock %}
