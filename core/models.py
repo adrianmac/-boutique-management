@@ -106,8 +106,12 @@ class RentalItem(models.Model):
     quantity = models.PositiveIntegerField(default=1)
     price_at_booking = models.DecimalField(max_digits=10, decimal_places=2)
 
+    @property
+    def line_total(self):
+        return self.price_at_booking * self.quantity
+
     def save(self, *args, **kwargs):
-        if not self.price_at_booking:
+        if self.price_at_booking is None:
             self.price_at_booking = self.inventory_item.rental_price
         super().save(*args, **kwargs)
 
@@ -141,8 +145,16 @@ class Invoice(models.Model):
     total_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='UNPAID')
 
+    @property
+    def total_paid(self):
+        return self.payments.aggregate(total=models.Sum('amount'))['total'] or Decimal('0.00')
+
+    @property
+    def balance_due(self):
+        return self.total_amount - self.total_paid
+
     def update_status(self):
-        paid = self.payments.aggregate(total=models.Sum('amount'))['total'] or Decimal('0.00')
+        paid = self.total_paid
         if paid >= self.total_amount:
             self.status = 'PAID'
         elif paid > 0:
@@ -176,6 +188,6 @@ class EventService(models.Model):
     notes = models.CharField(max_length=200, blank=True)
 
     def save(self, *args, **kwargs):
-        if not self.price:
+        if self.price is None:
             self.price = self.service.base_price
         super().save(*args, **kwargs)

@@ -4,6 +4,7 @@ import io
 import base64
 from django.shortcuts import render, get_object_or_404, redirect
 from django.db.models import Q
+from django.core.paginator import Paginator
 from .models import InventoryItem
 from .forms import InventoryItemForm
 
@@ -22,6 +23,10 @@ def inventory_list(request):
 
     if category:
         items = items.filter(category=category)
+
+    paginator = Paginator(items, 24)
+    page = request.GET.get('page')
+    items = paginator.get_page(page)
 
     return render(request, 'core/inventory_list.html', {
         'items': items,

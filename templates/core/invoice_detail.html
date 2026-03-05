@@ -50,7 +50,7 @@
                     {{ item.inventory_item.name }} &times; {{ item.quantity }}
                     <div class="text-muted" style="font-size:12px;">Decor rental</div>
                   </td>
-                  <td class="text-end">${{ item.price_at_booking }}</td>
+                  <td class="text-end">${{ item.line_total }}</td>
                 </tr>
                 {% endfor %}
               {% endfor %}
@@ -74,7 +74,7 @@
                   {{ item.inventory_item.name }} &times; {{ item.quantity }}
                   <div class="text-muted" style="font-size:12px;">{{ invoice.rental.rental_date }} — {{ invoice.rental.return_date }}</div>
                 </td>
-                <td class="text-end">${{ item.price_at_booking }}</td>
+                <td class="text-end">${{ item.line_total }}</td>
               </tr>
               {% endfor %}
 
@@ -172,9 +172,11 @@
         </div>
         <div class="d-flex justify-content-between py-2 border-bottom">
           <span class="text-muted" style="font-size:13px;">Paid</span>
-          <span style="color:var(--success);">
-            ${% with paid=invoice.payments.all %}{% for p in paid %}{{ p.amount }}{% endfor %}{% endwith %}
-          </span>
+          <span style="color:var(--success); font-weight:600;">${{ invoice.total_paid }}</span>
+        </div>
+        <div class="d-flex justify-content-between py-2 border-bottom">
+          <span class="text-muted" style="font-size:13px;">Balance Due</span>
+          <strong style="color:{% if invoice.balance_due > 0 %}var(--danger){% else %}var(--success){% endif %};">${{ invoice.balance_due }}</strong>
         </div>
         <div class="d-flex justify-content-between py-2">
           <span style="font-weight:600; font-size:14px;">Status</span>

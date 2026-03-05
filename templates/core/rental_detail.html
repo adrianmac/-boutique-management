@@ -44,7 +44,7 @@
               <td><span class="text-muted" style="font-size:12px;">{{ item.inventory_item.get_category_display }}</span></td>
               <td class="text-center">{{ item.quantity }}</td>
               <td class="text-end">${{ item.price_at_booking }}</td>
-              <td class="text-end" style="font-weight:600;">${{ item.price_at_booking }}</td>
+              <td class="text-end" style="font-weight:600;">${{ item.line_total }}</td>
             </tr>
             {% endfor %}
           </tbody>

@@ -3,6 +3,8 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.http import HttpResponse
+from django.db.models import Q
+from django.core.paginator import Paginator
 from .models import Customer, InventoryItem, Rental, RentalItem, SeamstressJob
 from .forms import RentalStep1Form, SeamstressJobForm
 from .services import get_available_quantity, create_invoice_for_rental
@@ -12,7 +14,28 @@ from decimal import Decimal
 @login_required
 def rental_list(request):
     rentals = Rental.objects.all().order_by('-rental_date')
-    return render(request, 'core/rental_list.html', {'rentals': rentals})
+
+    query = request.GET.get('q')
+    if query:
+        rentals = rentals.filter(
+            Q(customer__name__icontains=query) |
+            Q(id__icontains=query)
+        )
+
+    status = request.GET.get('status')
+    if status:
+        rentals = rentals.filter(status=status)
+
+    paginator = Paginator(rentals, 25)
+    page = request.GET.get('page')
+    rentals = paginator.get_page(page)
+
+    return render(request, 'core/rental_list.html', {
+        'rentals': rentals,
+        'query': query,
+        'status': status,
+        'statuses': Rental.STATUS_CHOICES,
+    })
 
 @login_required
 def rental_detail(request, pk):
@@ -40,13 +63,18 @@ def rental_wizard_step1(request):
     if request.method == 'POST':
         form = RentalStep1Form(request.POST)
         if form.is_valid():
-            request.session['rental_data'] = {
-                'customer_id': form.cleaned_data['customer'].id,
-                'rental_date': form.cleaned_data['rental_date'].isoformat(),
-                'return_date': form.cleaned_data['return_date'].isoformat(),
-                'deposit': float(form.cleaned_data.get('deposit') or 0),
-            }
-            return redirect('rental_wizard_step2')
+            rental_date = form.cleaned_data['rental_date']
+            return_date = form.cleaned_data['return_date']
+            if return_date < rental_date:
+                form.add_error('return_date', 'Return date must be on or after the rental date.')
+            else:
+                request.session['rental_data'] = {
+                    'customer_id': form.cleaned_data['customer'].id,
+                    'rental_date': rental_date.isoformat(),
+                    'return_date': return_date.isoformat(),
+                    'deposit': float(form.cleaned_data.get('deposit') or 0),
+                }
+                return redirect('rental_wizard_step2')
     else:
         form = RentalStep1Form()
     return render(request, 'core/rental_wizard_step1.html', {'form': form})
@@ -71,9 +99,14 @@ def rental_wizard_step2(request):
     if request.method == 'POST':
         selected_items = {}
         for key, value in request.POST.items():
-            if key.startswith('qty_') and value and int(value) > 0:
-                item_id = int(key.split('_')[1])
-                selected_items[item_id] = int(value)
+            if key.startswith('qty_') and value:
+                try:
+                    qty = int(value)
+                except ValueError:
+                    continue
+                if qty > 0:
+                    item_id = int(key.split('_')[1])
+                    selected_items[item_id] = qty
 
         if not selected_items:
             messages.error(request, "Please select at least one item.")
@@ -123,8 +156,8 @@ def rental_wizard_confirm(request):
     display_items = []
     total_est = Decimal('0.00')
 
-    for item_id, qty in items_data.items():
-        item = InventoryItem.objects.get(id=item_id)
+    for item_id_str, qty in items_data.items():
+        item = InventoryItem.objects.get(id=int(item_id_str))
         line_total = item.rental_price * qty
         total_est += line_total
         display_items.append({'item': item, 'qty': qty, 'total': line_total})
@@ -145,8 +178,8 @@ def rental_wizard_confirm(request):
             deposit_amount=deposit
         )
 
-        for item_id, qty in items_data.items():
-            inv_item = InventoryItem.objects.get(id=item_id)
+        for item_id_str, qty in items_data.items():
+            inv_item = InventoryItem.objects.get(id=int(item_id_str))
             RentalItem.objects.create(
                 rental=rental,
                 inventory_item=inv_item,
