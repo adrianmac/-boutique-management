@@ -42,7 +42,8 @@ def calculate_event_total(event):
     budget = event.budget
 
     decor_total = Decimal('0.00')
-    for rental in event.rentals.all():
+    rentals = event.rentals.all().prefetch_related('items', 'alterations')
+    for rental in rentals:
         decor_total += calculate_rental_total(rental)
 
     service_total = Decimal("0.00")
