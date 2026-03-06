@@ -42,6 +42,12 @@ if VERCEL_URL:
     ALLOWED_HOSTS.append(VERCEL_URL)
     ALLOWED_HOSTS.append(".vercel.app")
 
+# Railway deployment: allow .railway.app subdomains
+RAILWAY_PUBLIC_DOMAIN = os.environ.get("RAILWAY_PUBLIC_DOMAIN")
+if RAILWAY_PUBLIC_DOMAIN:
+    ALLOWED_HOSTS.append(RAILWAY_PUBLIC_DOMAIN)
+    ALLOWED_HOSTS.append(".railway.app")
+
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -113,10 +119,12 @@ STORAGES = {
     },
 }
 
-# CSRF trusted origins for Vercel
+# CSRF trusted origins
 CSRF_TRUSTED_ORIGINS = []
 if VERCEL_URL:
     CSRF_TRUSTED_ORIGINS.append(f"https://{VERCEL_URL}")
+if RAILWAY_PUBLIC_DOMAIN:
+    CSRF_TRUSTED_ORIGINS.append(f"https://{RAILWAY_PUBLIC_DOMAIN}")
 _csrf_origins_env = os.environ.get("CSRF_TRUSTED_ORIGINS", "")
 if _csrf_origins_env:
     CSRF_TRUSTED_ORIGINS.extend([o.strip() for o in _csrf_origins_env.split(",") if o.strip()])
