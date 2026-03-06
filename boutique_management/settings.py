@@ -5,8 +5,15 @@ Django settings for boutique_management project.
 from pathlib import Path
 import os
 import dj_database_url
+import environ
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load .env file if it exists (local development)
+env = environ.Env()
+env_file = BASE_DIR / ".env"
+if env_file.exists():
+    environ.Env.read_env(str(env_file))
 
 # SECURITY: SECRET_KEY must be set via environment variable in production.
 # Generate one with: python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
@@ -102,11 +109,17 @@ DATABASES = {
     )
 }
 
-# Supabase and other cloud Postgres providers require SSL
-if os.environ.get("DATABASE_URL") and "sqlite" not in os.environ.get("DATABASE_URL", ""):
+# Supabase / cloud Postgres: enable SSL and configure for connection pooler
+_db_url = os.environ.get("DATABASE_URL", "")
+if _db_url and "sqlite" not in _db_url:
     DATABASES["default"]["OPTIONS"] = {
         "sslmode": "require",
     }
+    # Supabase Supavisor pooler uses port 6543 in transaction mode.
+    # Django must disable server-side cursors when using transaction pooling
+    # because prepared statements don't persist across pooled connections.
+    if "pooler.supabase.com" in _db_url or os.environ.get("SUPABASE_DB_POOLER") == "true":
+        DATABASES["default"]["DISABLE_SERVER_SIDE_CURSORS"] = True
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
