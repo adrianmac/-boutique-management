@@ -13,18 +13,23 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get("SECRET_KEY")
 if not SECRET_KEY:
     import sys
-    if 'runserver' in sys.argv or 'gunicorn' in str(sys.argv):
-        # Allow a dev fallback ONLY when DEBUG is explicitly true
-        if os.environ.get("DEBUG", "false").lower() == "true":
-            SECRET_KEY = "dev-only-insecure-key-change-in-production"
-        else:
-            raise RuntimeError(
-                "SECRET_KEY environment variable is not set. "
-                "Set it before running in production."
-            )
-    else:
+    _is_server = (
+        'runserver' in sys.argv
+        or 'gunicorn' in str(sys.argv)
+        or os.environ.get("VERCEL")        # Vercel serverless
+        or os.environ.get("RAILWAY_ENVIRONMENT")  # Railway
+    )
+    _is_management_cmd = not _is_server
+    if _is_management_cmd:
         # During management commands (migrate, collectstatic, etc.) use a temp key
         SECRET_KEY = "temp-key-for-management-commands-only"
+    elif os.environ.get("DEBUG", "false").lower() == "true":
+        SECRET_KEY = "dev-only-insecure-key-change-in-production"
+    else:
+        raise RuntimeError(
+            "SECRET_KEY environment variable is not set. "
+            "Set it before running in production."
+        )
 
 # SECURITY: DEBUG defaults to False. Set DEBUG=true in your environment only for local dev.
 DEBUG = os.environ.get("DEBUG", "false").lower() == "true"
