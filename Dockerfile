@@ -17,8 +17,8 @@ COPY . /app/
 # Collect static files
 RUN python manage.py collectstatic --noinput
 
-# Expose port
-EXPOSE 8000
+# Expose port (Railway sets PORT dynamically)
+EXPOSE ${PORT:-8000}
 
-# Run gunicorn
-CMD ["gunicorn", "boutique_management.wsgi:application", "--bind", "0.0.0.0:8000"]
+# Run gunicorn bound to dynamic PORT (defaults to 8000 for local Docker)
+CMD gunicorn boutique_management.wsgi:application --bind 0.0.0.0:${PORT:-8000}
