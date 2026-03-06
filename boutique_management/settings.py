@@ -36,6 +36,12 @@ if _allowed_hosts_env:
 else:
     ALLOWED_HOSTS = ["localhost", "127.0.0.1"] if DEBUG else []
 
+# Vercel deployment: allow .vercel.app subdomains
+VERCEL_URL = os.environ.get("VERCEL_URL")
+if VERCEL_URL:
+    ALLOWED_HOSTS.append(VERCEL_URL)
+    ALLOWED_HOSTS.append(".vercel.app")
+
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -101,7 +107,19 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 STATIC_URL = "static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+STORAGES = {
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
+
+# CSRF trusted origins for Vercel
+CSRF_TRUSTED_ORIGINS = []
+if VERCEL_URL:
+    CSRF_TRUSTED_ORIGINS.append(f"https://{VERCEL_URL}")
+_csrf_origins_env = os.environ.get("CSRF_TRUSTED_ORIGINS", "")
+if _csrf_origins_env:
+    CSRF_TRUSTED_ORIGINS.extend([o.strip() for o in _csrf_origins_env.split(",") if o.strip()])
 
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/login/'
