@@ -6,7 +6,7 @@ from .utils_email import send_notification_email
 
 @login_required
 def seamstress_list(request):
-    jobs = SeamstressJob.objects.all().order_by('due_date')
+    jobs = SeamstressJob.objects.select_related('customer').all().order_by('due_date')
     return render(request, 'core/seamstress_list.html', {'jobs': jobs})
 
 @login_required
