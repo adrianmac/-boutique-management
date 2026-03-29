@@ -1,9 +1,18 @@
 {% extends 'base.html' %}
+{% block title %}Plan Event — Step 1 — Boutique Manager{% endblock %}
 {% block content %}
+
+<div class="wizard-steps mb-4">
+  <div class="wizard-step active"><span class="wizard-step-num">1</span> Details</div>
+  <div class="wizard-step"><span class="wizard-step-num">2</span> Decor</div>
+  <div class="wizard-step"><span class="wizard-step-num">3</span> Services</div>
+  <div class="wizard-step"><span class="wizard-step-num">4</span> Confirm</div>
+</div>
+
 <div class="row justify-content-center">
     <div class="col-md-8">
         <div class="card">
-            <div class="card-header">Plan Event: Step 1</div>
+            <div class="card-header"><i class="bi bi-calendar-heart me-2"></i>Event Details</div>
             <div class="card-body">
                 <form method="post">
                     {% csrf_token %}

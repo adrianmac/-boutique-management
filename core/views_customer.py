@@ -1,6 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404, redirect
 from django.db.models import Q
+from django.core.paginator import Paginator
 from .models import Customer
 from .forms import CustomerForm
 
@@ -15,6 +16,10 @@ def customer_list(request):
             Q(email__icontains=query) |
             Q(phone__icontains=query)
         )
+
+    paginator = Paginator(customers, 25)
+    page = request.GET.get('page')
+    customers = paginator.get_page(page)
 
     return render(request, 'core/customer_list.html', {'customers': customers, 'query': query})
 

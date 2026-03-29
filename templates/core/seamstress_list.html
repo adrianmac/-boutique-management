@@ -1,38 +1,87 @@
 {% extends 'base.html' %}
+{% block title %}Seamstress Jobs — Boutique Manager{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>Seamstress Jobs</h2>
-    <a href="{% url 'seamstress_create' %}" class="btn btn-primary">New Walk-in Job</a>
+
+<div class="page-header">
+  <h2 class="italic">Seamstress Jobs</h2>
+  <a href="{% url 'seamstress_create' %}" class="btn btn-primary">
+    <i class="bi bi-plus-lg me-1"></i>New Walk-in Job
+  </a>
+</div>
+
+<div class="search-card">
+  <form method="get" class="row g-2">
+    <div class="col-md-6">
+      <div class="input-group">
+        <span class="input-group-text" style="background:white; border-color:var(--border);">
+          <i class="bi bi-search text-muted"></i>
+        </span>
+        <input type="text" name="q" class="form-control" placeholder="Search by customer or description..."
+               value="{{ query|default:'' }}" style="border-left:none;">
+      </div>
+    </div>
+    <div class="col-md-3">
+      <select name="status" class="form-select">
+        <option value="">All Statuses</option>
+        {% for code, name in statuses %}
+        <option value="{{ code }}" {% if status == code %}selected{% endif %}>{{ name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2 d-grid">
+      <button type="submit" class="btn btn-outline-secondary">Filter</button>
+    </div>
+    {% if query or status %}
+    <div class="col-md-1 d-grid">
+      <a href="{% url 'seamstress_list' %}" class="btn btn-outline-danger">Clear</a>
+    </div>
+    {% endif %}
+  </form>
 </div>
 
 <div class="card">
+  <div class="table-responsive">
     <table class="table table-hover mb-0">
-        <thead>
-            <tr>
-                <th>Customer</th>
-                <th>Due Date</th>
-                <th>Status</th>
-                <th>Description</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for job in jobs %}
-            <tr>
-                <td>{{ job.customer.name }}</td>
-                <td>{{ job.due_date|date:"M d" }}</td>
-                <td>
-                    <span class="badge {% if job.status == 'READY' %}bg-success{% elif job.status == 'PENDING' %}bg-warning{% else %}bg-secondary{% endif %}">
-                        {{ job.get_status_display }}
-                    </span>
-                </td>
-                <td>{{ job.description|truncatechars:30 }}</td>
-                <td><a href="{% url 'seamstress_detail' pk=job.pk %}" class="btn btn-sm btn-outline-primary">View</a></td>
-            </tr>
-            {% empty %}
-            <tr><td colspan="5" class="text-center">No active jobs.</td></tr>
-            {% endfor %}
-        </tbody>
+      <thead>
+        <tr>
+          <th>Customer</th>
+          <th>Due Date</th>
+          <th>Status</th>
+          <th>Price</th>
+          <th>Description</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for job in jobs %}
+        <tr onclick="window.location='{% url 'seamstress_detail' pk=job.pk %}'" style="cursor:pointer;">
+          <td><strong>{{ job.customer.name }}</strong></td>
+          <td>{{ job.due_date|date:"M d, Y" }}</td>
+          <td>
+            <span class="badge status-{{ job.status|lower }}">{{ job.get_status_display }}</span>
+          </td>
+          <td>${{ job.price }}</td>
+          <td class="text-muted" style="font-size:13px;">{{ job.description|truncatechars:40 }}</td>
+          <td class="text-end">
+            <a href="{% url 'seamstress_detail' pk=job.pk %}" class="btn btn-sm btn-outline-primary"
+               onclick="event.stopPropagation();">View</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" class="text-center py-5 text-muted">
+            <i class="bi bi-scissors" style="font-size:2rem; display:block; margin-bottom:.5rem; opacity:.3;"></i>
+            No active jobs.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
     </table>
+  </div>
 </div>
+
+{% with page_obj=jobs %}
+{% include 'core/pagination.html' %}
+{% endwith %}
+
 {% endblock %}

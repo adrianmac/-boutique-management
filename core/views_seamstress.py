@@ -1,13 +1,36 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404, redirect
+from django.db.models import Q
+from django.core.paginator import Paginator
 from .models import SeamstressJob, Customer
-from .forms import SeamstressJobForm, CustomerForm
+from .forms import SeamstressJobForm
 from .utils_email import send_notification_email
 
 @login_required
 def seamstress_list(request):
     jobs = SeamstressJob.objects.all().order_by('due_date')
-    return render(request, 'core/seamstress_list.html', {'jobs': jobs})
+
+    query = request.GET.get('q')
+    if query:
+        jobs = jobs.filter(
+            Q(customer__name__icontains=query) |
+            Q(description__icontains=query)
+        )
+
+    status = request.GET.get('status')
+    if status:
+        jobs = jobs.filter(status=status)
+
+    paginator = Paginator(jobs, 25)
+    page = request.GET.get('page')
+    jobs = paginator.get_page(page)
+
+    return render(request, 'core/seamstress_list.html', {
+        'jobs': jobs,
+        'query': query,
+        'status': status,
+        'statuses': SeamstressJob.STATUS_CHOICES,
+    })
 
 @login_required
 def seamstress_detail(request, pk):

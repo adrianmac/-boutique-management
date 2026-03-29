@@ -68,7 +68,7 @@
                   <td>{{ item.inventory_item.name }}</td>
                   <td>{{ item.quantity }}</td>
                   <td>${{ item.price_at_booking }}</td>
-                  <td>${{ item.quantity|stringformat:"s" }}<!-- computed below --></td>
+                  <td>${{ item.line_total }}</td>
                 </tr>
                 {% endfor %}
               </tbody>

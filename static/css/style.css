@@ -691,3 +691,28 @@ a:hover { color: var(--gold); }
 /* ── input-group fix ── */
 .input-group .form-control:focus { z-index: 1; }
 .input-group .btn { border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+
+/* ── Pagination ── */
+.page-link {
+  color: var(--plum);
+  border-color: var(--border);
+  font-size: 13px;
+  padding: 0.4rem 0.75rem;
+}
+
+.page-link:hover {
+  background: var(--champagne);
+  border-color: var(--champagne-deep);
+  color: var(--plum);
+}
+
+.page-item.active .page-link {
+  background: var(--plum);
+  border-color: var(--plum);
+  color: var(--champagne);
+}
+
+.page-item.disabled .page-link {
+  color: var(--muted);
+  background: transparent;
+}

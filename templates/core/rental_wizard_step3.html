@@ -1,17 +1,38 @@
 {% extends 'base.html' %}
+{% block title %}New Rental — Step 3 — Boutique Manager{% endblock %}
 {% block content %}
+
+<div class="wizard-steps mb-4">
+  <div class="wizard-step"><span class="wizard-step-num">1</span> Details</div>
+  <div class="wizard-step"><span class="wizard-step-num">2</span> Items</div>
+  <div class="wizard-step active"><span class="wizard-step-num">3</span> Alterations</div>
+  <div class="wizard-step"><span class="wizard-step-num">4</span> Confirm</div>
+</div>
+
 <div class="row justify-content-center">
     <div class="col-md-6">
         <div class="card">
-            <div class="card-header">Step 3: Seamstress Services (Optional)</div>
+            <div class="card-header"><i class="bi bi-scissors me-2"></i>Seamstress Services (Optional)</div>
             <div class="card-body">
                 <p class="text-muted">Do you need alterations for this rental?</p>
                 <form method="post">
                     {% csrf_token %}
-                    {{ form.as_p }}
+                    {% for field in form %}
+                    <div class="mb-3">
+                        <label class="form-label">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.errors %}
+                        <div class="text-danger" style="font-size:12px;">{{ field.errors|join:", " }}</div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
                     <div class="d-flex justify-content-between mt-4">
-                        <button type="submit" name="skip" class="btn btn-outline-secondary">Skip / No Alterations</button>
-                        <button type="submit" class="btn btn-primary">Add Service & Continue</button>
+                        <button type="submit" name="skip" class="btn btn-outline-secondary">
+                            <i class="bi bi-skip-forward me-1"></i>Skip / No Alterations
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            Add & Continue <i class="bi bi-arrow-right"></i>
+                        </button>
                     </div>
                 </form>
             </div>

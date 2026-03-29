@@ -1,30 +1,48 @@
 {% extends 'base.html' %}
+{% block title %}New Rental — Step 1 — Boutique Manager{% endblock %}
 {% block content %}
+
+<div class="wizard-steps mb-4">
+  <div class="wizard-step active"><span class="wizard-step-num">1</span> Details</div>
+  <div class="wizard-step"><span class="wizard-step-num">2</span> Items</div>
+  <div class="wizard-step"><span class="wizard-step-num">3</span> Alterations</div>
+  <div class="wizard-step"><span class="wizard-step-num">4</span> Confirm</div>
+</div>
+
 <div class="row justify-content-center">
     <div class="col-md-6">
         <div class="card">
-            <div class="card-header">Step 1: Rental Details</div>
+            <div class="card-header"><i class="bi bi-bag me-2"></i>Rental Details</div>
             <div class="card-body">
                 <form method="post">
                     {% csrf_token %}
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                      {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+                    </div>
+                    {% endif %}
                     <div class="mb-3">
                         <label class="form-label">Customer</label>
                         <div class="input-group">
                             {{ form.customer }}
                             <a href="{% url 'customer_create' %}" class="btn btn-outline-primary" target="_blank" title="Add New Customer"><i class="bi bi-person-plus"></i></a>
                         </div>
+                        {% if form.customer.errors %}<div class="text-danger" style="font-size:12px;">{{ form.customer.errors|join:", " }}</div>{% endif %}
                     </div>
                     <div class="mb-3">
                         {{ form.rental_date.label_tag }}
                         {{ form.rental_date }}
+                        {% if form.rental_date.errors %}<div class="text-danger" style="font-size:12px;">{{ form.rental_date.errors|join:", " }}</div>{% endif %}
                     </div>
                     <div class="mb-3">
                         {{ form.return_date.label_tag }}
                         {{ form.return_date }}
+                        {% if form.return_date.errors %}<div class="text-danger" style="font-size:12px;">{{ form.return_date.errors|join:", " }}</div>{% endif %}
                     </div>
                     <div class="mb-3">
                         {{ form.deposit.label_tag }}
                         {{ form.deposit }}
+                        {% if form.deposit.errors %}<div class="text-danger" style="font-size:12px;">{{ form.deposit.errors|join:", " }}</div>{% endif %}
                     </div>
                     <div class="d-flex justify-content-end mt-3">
                         <button type="submit" class="btn btn-primary">Next: Select Items <i class="bi bi-arrow-right"></i></button>

@@ -39,6 +39,14 @@ class RentalStep1Form(forms.Form):
     return_date = forms.DateField(widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}))
     deposit = forms.DecimalField(min_value=0, required=False, widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Optional deposit amount'}))
 
+    def clean(self):
+        cleaned_data = super().clean()
+        rental_date = cleaned_data.get('rental_date')
+        return_date = cleaned_data.get('return_date')
+        if rental_date and return_date and return_date < rental_date:
+            self.add_error('return_date', 'Return date must be on or after the rental date.')
+        return cleaned_data
+
 class SeamstressJobForm(forms.ModelForm):
     class Meta:
         model = SeamstressJob

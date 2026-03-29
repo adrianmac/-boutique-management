@@ -1,7 +1,16 @@
 {% extends 'base.html' %}
+{% block title %}Plan Event — Step 2 — Boutique Manager{% endblock %}
 {% block content %}
+
+<div class="wizard-steps mb-4">
+  <div class="wizard-step"><span class="wizard-step-num">1</span> Details</div>
+  <div class="wizard-step active"><span class="wizard-step-num">2</span> Decor</div>
+  <div class="wizard-step"><span class="wizard-step-num">3</span> Services</div>
+  <div class="wizard-step"><span class="wizard-step-num">4</span> Confirm</div>
+</div>
+
 <div class="card">
-    <div class="card-header">Select Decor Items (Tablecloths, Vases, etc.)</div>
+    <div class="card-header"><i class="bi bi-stars me-2"></i>Select Inventory Items</div>
     <div class="card-body">
         <form method="post">
             {% csrf_token %}
@@ -10,6 +19,7 @@
                     <thead>
                         <tr>
                             <th>Item</th>
+                            <th>Category</th>
                             <th>Price</th>
                             <th>Available</th>
                             <th>Quantity</th>
@@ -19,21 +29,24 @@
                         {% for entry in items %}
                         <tr>
                             <td>{{ entry.item.name }}</td>
+                            <td>{{ entry.item.get_category_display }}</td>
                             <td>${{ entry.item.rental_price }}</td>
                             <td>{{ entry.avail }}</td>
                             <td style="width: 150px;">
-                                <input type="number" name="qty_{{ entry.item.id }}" class="form-control" min="0" max="{{ entry.avail }}">
+                                <input type="number" name="qty_{{ entry.item.id }}" class="form-control" min="0" max="{{ entry.avail }}" value="0">
                             </td>
                         </tr>
                         {% empty %}
-                        <tr><td colspan="4" class="text-center">No decor items available on this date.</td></tr>
+                        <tr><td colspan="5" class="text-center py-4 text-muted">No items available on this date.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
             <div class="d-flex justify-content-between mt-4">
-                <button type="submit" name="skip" class="btn btn-outline-secondary">Skip Decor Selection</button>
-                <button type="submit" class="btn btn-primary">Next: Confirm <i class="bi bi-arrow-right"></i></button>
+                <button type="submit" name="skip" class="btn btn-outline-secondary">
+                    <i class="bi bi-skip-forward me-1"></i>Skip Decor Selection
+                </button>
+                <button type="submit" class="btn btn-primary">Next: Services <i class="bi bi-arrow-right"></i></button>
             </div>
         </form>
     </div>

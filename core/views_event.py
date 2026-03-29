@@ -1,24 +1,39 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
-from django.template.loader import render_to_string
-from django.http import HttpResponse
 from django.contrib import messages
+from django.db.models import Q
+from django.core.paginator import Paginator
 from .models import Customer, InventoryItem, Event, Rental, RentalItem, Service, EventService
 from .forms import EventStep1Form
 from .services import get_available_quantity, create_invoice_for_event
 from decimal import Decimal
-import traceback
-import sys
 
 @login_required
 def event_list(request):
-    try:
-        events = Event.objects.all().order_by('-date')
-        return render(request, 'core/event_list.html', {'events': events})
-    except Exception as e:
-        print(f"ERROR in event_list: {e}", file=sys.stderr)
-        traceback.print_exc()
-        return HttpResponse(f"Error in event_list: {e}", status=500)
+    events = Event.objects.all().order_by('-date')
+
+    query = request.GET.get('q')
+    if query:
+        events = events.filter(
+            Q(name__icontains=query) |
+            Q(customer__name__icontains=query) |
+            Q(location__icontains=query)
+        )
+
+    event_type = request.GET.get('type')
+    if event_type:
+        events = events.filter(event_type=event_type)
+
+    paginator = Paginator(events, 25)
+    page = request.GET.get('page')
+    events = paginator.get_page(page)
+
+    return render(request, 'core/event_list.html', {
+        'events': events,
+        'query': query,
+        'event_type': event_type,
+        'event_types': Event.EVENT_TYPE_CHOICES,
+    })
 
 @login_required
 def event_detail(request, pk):
@@ -28,37 +43,25 @@ def event_detail(request, pk):
 @login_required
 def event_wizard_step1(request):
     """Step 1: Event Details"""
-    try:
-        if request.method == 'POST':
-            form = EventStep1Form(request.POST)
-            if form.is_valid():
-                request.session['event_data'] = {
-                    'name': form.cleaned_data['name'],
-                    'customer_id': form.cleaned_data['customer'].id,
-                    'date': form.cleaned_data['date'].isoformat(),
-                    'guest_count': form.cleaned_data['guest_count'],
-                    'event_type': form.cleaned_data['event_type'],
-                    'location': form.cleaned_data['location'],
-                    'description': form.cleaned_data['description'],
-                    'budget': float(form.cleaned_data['budget']),
-                    'deposit_amount': float(form.cleaned_data.get('deposit_amount') or 0),
-                }
-                return redirect('event_wizard_step2')
-        else:
-            form = EventStep1Form()
+    if request.method == 'POST':
+        form = EventStep1Form(request.POST)
+        if form.is_valid():
+            request.session['event_data'] = {
+                'name': form.cleaned_data['name'],
+                'customer_id': form.cleaned_data['customer'].id,
+                'date': form.cleaned_data['date'].isoformat(),
+                'guest_count': form.cleaned_data['guest_count'],
+                'event_type': form.cleaned_data['event_type'],
+                'location': form.cleaned_data['location'],
+                'description': form.cleaned_data['description'],
+                'budget': float(form.cleaned_data['budget']),
+                'deposit_amount': float(form.cleaned_data.get('deposit_amount') or 0),
+            }
+            return redirect('event_wizard_step2')
+    else:
+        form = EventStep1Form()
 
-        try:
-            content = render_to_string('core/event_wizard_step1.html', {'form': form}, request=request)
-            return HttpResponse(content)
-        except Exception as tpl_e:
-            print(f"TEMPLATE ERROR in event_wizard_step1: {tpl_e}", file=sys.stderr)
-            traceback.print_exc()
-            return HttpResponse(f"Template Error: {tpl_e}", status=500)
-
-    except Exception as e:
-        print(f"CRITICAL ERROR in event_wizard_step1: {e}", file=sys.stderr)
-        traceback.print_exc()
-        return HttpResponse(f"Server Error: {e}", status=500)
+    return render(request, 'core/event_wizard_step1.html', {'form': form})
 
 @login_required
 def event_wizard_step2(request):
@@ -68,7 +71,7 @@ def event_wizard_step2(request):
         return redirect('event_wizard_step1')
 
     event_date = data['date']
-    items = InventoryItem.objects.filter(category='DECOR')
+    items = InventoryItem.objects.all()
     available_items = []
 
     for item in items:
@@ -83,9 +86,14 @@ def event_wizard_step2(request):
 
         selected_items = {}
         for key, value in request.POST.items():
-            if key.startswith('qty_') and value and int(value) > 0:
-                item_id = int(key.split('_')[1])
-                selected_items[item_id] = int(value)
+            if key.startswith('qty_') and value:
+                try:
+                    qty = int(value)
+                except ValueError:
+                    continue
+                if qty > 0:
+                    item_id = int(key.split('_')[1])
+                    selected_items[item_id] = qty
 
         request.session['event_items'] = selected_items
         return redirect('event_wizard_step3')
@@ -127,14 +135,14 @@ def event_wizard_confirm(request):
         return redirect('event_wizard_step1')
 
     customer = Customer.objects.get(id=data['customer_id'])
-    budget = Decimal(data['budget'])
+    budget = Decimal(str(data['budget']))
 
     decor_items = []
     decor_total = Decimal('0.00')
 
     if items_data:
-        for item_id, qty in items_data.items():
-            item = InventoryItem.objects.get(id=item_id)
+        for item_id_str, qty in items_data.items():
+            item = InventoryItem.objects.get(id=int(item_id_str))
             line_total = item.rental_price * qty
             decor_total += line_total
             decor_items.append({'item': item, 'qty': qty, 'total': line_total})
@@ -143,8 +151,8 @@ def event_wizard_confirm(request):
     service_total = Decimal('0.00')
 
     if services_data:
-        for srv_id in services_data.keys():
-            srv = Service.objects.get(id=srv_id)
+        for srv_id_str in services_data.keys():
+            srv = Service.objects.get(id=int(srv_id_str))
             service_total += srv.base_price
             service_items.append(srv)
 
@@ -160,7 +168,7 @@ def event_wizard_confirm(request):
             location=data['location'],
             description=data['description'],
             budget=budget,
-            deposit_amount=Decimal(data.get('deposit_amount', 0))
+            deposit_amount=Decimal(str(data.get('deposit_amount', 0)))
         )
 
         if items_data:
@@ -171,8 +179,8 @@ def event_wizard_confirm(request):
                 return_date=data['date'],
                 status='RESERVED'
             )
-            for item_id, qty in items_data.items():
-                inv_item = InventoryItem.objects.get(id=item_id)
+            for item_id_str, qty in items_data.items():
+                inv_item = InventoryItem.objects.get(id=int(item_id_str))
                 RentalItem.objects.create(
                     rental=rental,
                     inventory_item=inv_item,
@@ -181,8 +189,8 @@ def event_wizard_confirm(request):
                 )
 
         if services_data:
-            for srv_id in services_data.keys():
-                srv = Service.objects.get(id=srv_id)
+            for srv_id_str in services_data.keys():
+                srv = Service.objects.get(id=int(srv_id_str))
                 EventService.objects.create(
                     event=event,
                     service=srv,

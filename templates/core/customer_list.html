@@ -80,4 +80,8 @@
   </div>
 </div>
 
+{% with page_obj=customers %}
+{% include 'core/pagination.html' %}
+{% endwith %}
+
 {% endblock %}

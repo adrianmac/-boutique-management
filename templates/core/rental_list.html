@@ -9,6 +9,36 @@
   </a>
 </div>
 
+<div class="search-card">
+  <form method="get" class="row g-2">
+    <div class="col-md-6">
+      <div class="input-group">
+        <span class="input-group-text" style="background:white; border-color:var(--border);">
+          <i class="bi bi-search text-muted"></i>
+        </span>
+        <input type="text" name="q" class="form-control" placeholder="Search by customer name or rental ID..."
+               value="{{ query|default:'' }}" style="border-left:none;">
+      </div>
+    </div>
+    <div class="col-md-3">
+      <select name="status" class="form-select">
+        <option value="">All Statuses</option>
+        {% for code, name in statuses %}
+        <option value="{{ code }}" {% if status == code %}selected{% endif %}>{{ name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2 d-grid">
+      <button type="submit" class="btn btn-outline-secondary">Filter</button>
+    </div>
+    {% if query or status %}
+    <div class="col-md-1 d-grid">
+      <a href="{% url 'rental_list' %}" class="btn btn-outline-danger">Clear</a>
+    </div>
+    {% endif %}
+  </form>
+</div>
+
 <div class="card">
   <div class="table-responsive">
     <table class="table table-hover mb-0">
@@ -57,5 +87,9 @@
     </table>
   </div>
 </div>
+
+{% with page_obj=rentals %}
+{% include 'core/pagination.html' %}
+{% endwith %}
 
 {% endblock %}
