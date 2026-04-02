@@ -143,8 +143,9 @@ def event_wizard_confirm(request):
     service_total = Decimal('0.00')
 
     if services_data:
-        for srv_id in services_data.keys():
-            srv = Service.objects.get(id=srv_id)
+        srv_ids = services_data.keys()
+        services = Service.objects.filter(id__in=srv_ids)
+        for srv in services:
             service_total += srv.base_price
             service_items.append(srv)
 
